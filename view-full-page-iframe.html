@@ -89,7 +89,6 @@
         }
 
         async function init(canvasUrl) {
-            console.log("canvasUrl:", canvasUrl)
             if (!canvasUrl) {
                 console.warn("No canvasurl attribute found on iframe")
                 return
@@ -148,7 +147,7 @@
             }
         }
         window.addEventListener("message", (event) => {
-            if (event.data?.type === "CANVAS_DATA") {
+            if (event.data?.type === "CANVAS_URL") {
                 const canvasUrl = event.data.canvasUrl
                 init(canvasUrl)
             }
