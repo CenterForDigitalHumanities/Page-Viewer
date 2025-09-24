@@ -134,7 +134,27 @@ Example flow:
 - Supports standard XYWH coordinate selectors
 - Automatic image URL construction from IIIF Image API info.json responses
 
-## Development
+## Contributing
+
+We welcome contributions from the community! This project is maintained by the [Center for Digital Humanities](https://digitalhumanities.wustl.edu/) at Washington University in St. Louis.
+
+### Quick Start for Contributors
+
+1. **Fork and clone** the repository
+2. **Set up development environment**: See [DEVELOPMENT.md](DEVELOPMENT.md) for detailed instructions
+3. **Read the contribution guidelines**: [CONTRIBUTING.md](CONTRIBUTING.md)
+4. **Check out the AI development guide**: [COPILOT.md](COPILOT.md) for AI assistants
+
+### Ways to Contribute
+
+- 🐛 **Report bugs** using our [issue templates](.github/ISSUE_TEMPLATE/)
+- 💡 **Suggest features** for IIIF functionality improvements
+- 📝 **Improve documentation** and examples
+- 🔧 **Submit code** for bug fixes and new features
+- 🧪 **Test with IIIF manifests** from various institutions
+- ♿ **Enhance accessibility** features
+
+### Development
 
 The modular architecture makes it easy to:
 
@@ -142,3 +162,22 @@ The modular architecture makes it easy to:
 - **Modify styling**: Edit `styles.css` for visual changes
 - **Add message types**: Extend `MessageHandler` for new communication patterns
 - **Customize UI**: Modify `UIManager` for different interaction patterns
+
+See [DEVELOPMENT.md](DEVELOPMENT.md) for detailed development instructions.
+
+## Community and Support
+
+- 📋 **Issues**: Report bugs and request features via [GitHub Issues](https://github.com/CenterForDigitalHumanities/Page-Viewer/issues)
+- 💬 **Discussions**: Join conversations in [GitHub Discussions](https://github.com/CenterForDigitalHumanities/Page-Viewer/discussions)
+- 🏛️ **Institution**: [Center for Digital Humanities](https://digitalhumanities.wustl.edu/)
+- 🌐 **IIIF Community**: Connect with the broader [IIIF community](https://iiif.io/community/)
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- **IIIF Community**: For developing and maintaining the IIIF standards
+- **Contributors**: All developers who have contributed to this project
+- **Digital Humanities Community**: For supporting open source tools for cultural heritage

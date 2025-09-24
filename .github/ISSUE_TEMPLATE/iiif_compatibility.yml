@@ -1,0 +1,144 @@
+name: IIIF Compatibility Issue
+description: Report problems with specific IIIF manifests or IIIF standard compliance
+title: "[IIIF]: "
+labels: ["iiif", "compatibility", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This template is for reporting issues related to IIIF manifest compatibility or IIIF standard compliance.
+
+  - type: textarea
+    id: issue-description
+    attributes:
+      label: IIIF Issue Description
+      description: Describe the IIIF-related problem you're experiencing.
+      placeholder: The viewer fails to load annotations from this IIIF v3 manifest...
+    validations:
+      required: true
+
+  - type: input
+    id: manifest-url
+    attributes:
+      label: IIIF Manifest URL
+      description: Provide the URL of the problematic IIIF manifest.
+      placeholder: https://example.com/iiif/manifest.json
+    validations:
+      required: true
+
+  - type: dropdown
+    id: iiif-version
+    attributes:
+      label: IIIF Version
+      description: Which IIIF Presentation API version is the manifest using?
+      options:
+        - IIIF Presentation API v2
+        - IIIF Presentation API v3
+        - Mixed v2/v3
+        - Unknown
+    validations:
+      required: true
+
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: Issue Type
+      description: What type of IIIF compatibility issue is this?
+      options:
+        - Manifest parsing error
+        - Canvas loading failure
+        - Annotation display problem
+        - Image service issue
+        - Coordinate mapping problem
+        - Metadata display issue
+        - Navigation structure issue
+        - Other IIIF standard violation
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected IIIF Behavior
+      description: What should happen according to the IIIF specification?
+      placeholder: According to the IIIF Presentation API v3, this manifest should...
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual Behavior
+      description: What actually happens when the viewer processes this manifest?
+      placeholder: Instead, the viewer...
+    validations:
+      required: true
+
+  - type: textarea
+    id: manifest-snippet
+    attributes:
+      label: Relevant Manifest Snippet
+      description: If possible, include the relevant portion of the IIIF manifest JSON.
+      placeholder: |
+        {
+          "@context": "http://iiif.io/api/presentation/3/context.json",
+          "id": "https://example.com/manifest",
+          "type": "Manifest",
+          "items": [...]
+        }
+      render: json
+    validations:
+      required: false
+
+  - type: textarea
+    id: validation-results
+    attributes:
+      label: IIIF Validator Results
+      description: If you've run the manifest through the IIIF validator, please include results.
+      placeholder: |
+        IIIF Validator (https://iiif.io/api/validator/) results:
+        - Error: Missing required property 'id'
+        - Warning: Deprecated property '@id' used instead of 'id'
+    validations:
+      required: false
+
+  - type: input
+    id: institution
+    attributes:
+      label: Institution/Source
+      description: What institution or service provided this IIIF manifest?
+      placeholder: e.g., Harvard Art Museums, Europeana, etc.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: iiif-testing
+    attributes:
+      label: IIIF Testing Checklist
+      description: Testing performed
+      options:
+        - label: I have verified the manifest loads in other IIIF viewers
+        - label: I have checked the manifest with the IIIF validator
+        - label: I have tested with both HTTP and HTTPS versions of the manifest
+        - label: I have confirmed this works with IIIF Presentation API v2 manifests
+        - label: I have confirmed this works with IIIF Presentation API v3 manifests
+
+  - type: textarea
+    id: other-viewers
+    attributes:
+      label: Behavior in Other IIIF Viewers
+      description: How does this manifest behave in other IIIF viewers (Mirador, Universal Viewer, etc.)?
+      placeholder: |
+        - Mirador: Works correctly
+        - Universal Viewer: Same issue
+        - OpenSeadragon: Not applicable
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other relevant information about this IIIF compatibility issue.
+    validations:
+      required: false

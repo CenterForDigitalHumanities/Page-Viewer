@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Questions and Discussions
+    url: https://github.com/CenterForDigitalHumanities/Page-Viewer/discussions
+    about: Ask questions and discuss ideas with the community
+  - name: 📚 IIIF Community
+    url: https://iiif.io/community/
+    about: Join the broader IIIF community for general IIIF questions
+  - name: 🔧 IIIF Technical Questions
+    url: https://groups.google.com/forum/#!forum/iiif-discuss
+    about: Technical questions about IIIF standards and implementation
+  - name: 🏛️ Center for Digital Humanities
+    url: https://digitalhumanities.wustl.edu/
+    about: Learn more about the Center for Digital Humanities at Washington University in St. Louis

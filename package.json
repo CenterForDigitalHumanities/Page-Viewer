@@ -1,0 +1,80 @@
+{
+  "name": "iiif-page-viewer",
+  "version": "2.0.0",
+  "description": "A lightweight IIIF (International Image Interoperability Framework) image viewing tool designed for inclusion as an iframe element in other documents",
+  "main": "viewer.js",
+  "type": "module",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "serve": "python3 -m http.server 8000",
+    "dev": "python3 -m http.server 8000"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CenterForDigitalHumanities/Page-Viewer.git"
+  },
+  "keywords": [
+    "iiif",
+    "image-viewer",
+    "digital-humanities",
+    "iframe",
+    "annotations",
+    "presentation-api",
+    "image-api",
+    "cultural-heritage",
+    "web-components",
+    "accessibility"
+  ],
+  "author": {
+    "name": "Center for Digital Humanities",
+    "url": "https://digitalhumanities.wustl.edu/"
+  },
+  "contributors": [
+    {
+      "name": "Priyal Patel",
+      "email": "mepripri@users.noreply.github.com",
+      "url": "https://github.com/mepripri"
+    },
+    {
+      "name": "Patrick Cuba",
+      "email": "cubap@users.noreply.github.com", 
+      "url": "https://github.com/cubap"
+    }
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/CenterForDigitalHumanities/Page-Viewer/issues"
+  },
+  "homepage": "https://github.com/CenterForDigitalHumanities/Page-Viewer#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "browserslist": [
+    "last 2 Chrome versions",
+    "last 2 Firefox versions",
+    "last 2 Safari versions",
+    "last 2 Edge versions"
+  ],
+  "funding": {
+    "type": "institutional",
+    "url": "https://digitalhumanities.wustl.edu/"
+  },
+  "directories": {
+    "doc": "docs"
+  },
+  "files": [
+    "index.html",
+    "viewer.js",
+    "iiif-data-service.js",
+    "ui-manager.js",
+    "message-handler.js",
+    "styles.css",
+    "README.md",
+    "CONTRIBUTING.md",
+    "COPILOT.md",
+    "DEVELOPMENT.md",
+    "CODE_OF_CONDUCT.md",
+    "SECURITY.md",
+    "CHANGELOG.md"
+  ]
+}
