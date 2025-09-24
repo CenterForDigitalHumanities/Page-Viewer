@@ -5,7 +5,8 @@
  * and Image API (v2/v3) standards. This main module coordinates between
  * data services, UI management, and message handling.
  * 
- * @author Assistant
+ * @author Priyal Patel @mepripri
+ * @author Patrick Cuba @cubap
  * @version 2.0.0
  */
 

@@ -1,6 +1,9 @@
 /**
  * Message Handler - Manages communication with parent window
  * Handles postMessage API communication for iframe integration
+ * 
+ * @author Priyal Patel @mepripri
+ * @author Patrick Cuba @cubap
  */
 export class MessageHandler {
     constructor(pageViewer) {

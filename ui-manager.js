@@ -3,6 +3,9 @@ import { IIIFDataService } from './iiif-data-service.js'
 /**
  * UI Manager - Handles all user interface operations
  * Manages DOM manipulation, event handling, and user interactions
+ * 
+ * @author Priyal Patel @mepripri
+ * @author Patrick Cuba @cubap
  */
 export class UIManager {
     constructor(containerId = 'imageContainer') {

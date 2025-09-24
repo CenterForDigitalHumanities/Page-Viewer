@@ -1,6 +1,9 @@
 /**
  * IIIF Data Service - Handles all IIIF-related data fetching and parsing
  * Supports IIIF Presentation API v2/v3 and IIIF Image API v2/v3
+ * 
+ * @author Priyal Patel @mepripri
+ * @author Patrick Cuba @cubap
  */
 export class IIIFDataService {
     /**
