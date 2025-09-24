@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>View Full Page iFrame</title>
+    <style>
+        #imageContainer {
+            position: relative;
+            display: inline-block;
+            max-width: 100%;
+            background-image: url(https://t-pen.org/TPEN/images/loading2.gif);
+            background-repeat: no-repeat;
+            background-position: center;
+            min-height: 200px;
+            width: 100%;
+            pointer-events: none;
+        }
+
+        #canvasImage {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .overlayBox {
+            position: absolute;
+            border: 1px solid white;
+            pointer-events: auto;
+            box-sizing: border-box;
+            cursor: pointer;
+            transition: box-shadow 0.15s ease, border-color 0.15s ease;
+            border-radius: 2px;
+        }
+
+        .overlayBox.clicked {
+            border-color: #ff6f3d;
+            border-width: 3px;
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.8);
+            z-index: 10;
+        }
+
+        .tooltip {
+            background-color: #ff6f3d;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0.9;
+            z-index: 5;
+        }
+    </style>
+</head>
+<body>
+    <div id="imageContainer"></div>
+    <script>
+        function parseXYWH(target) {
+            const xywh = target.replace("xywh=pixel:", "").split(",").map(Number)
+            return { x: xywh[0], y: xywh[1], w: xywh[2], h: xywh[3] }
+        }
+
+        async function getImageAndLineDimensionsText(data) {
+            const response = await fetch(data)
+            if (!response.ok) {
+                document.getElementById("imageContainer").innerText = "No canvas data found yet."
+                document.getElementById("imageContainer").style.backgroundImage = "none"
+                return
+            }
+            data = await response.json()
+            const target = await fetch(data.target)
+            const targetData = await target.json()
+            const imgUrl = targetData?.items?.[0]?.items?.[0]?.body.id ?? targetData?.images?.[0]?.resource["@id"]
+            const imgWidth = targetData?.width
+            const imgHeight = targetData?.height
+            const annotations = await Promise.all(data.items.map(async anno => {
+                const line = await fetch(anno.id)
+                const lineData = await line.json()
+                return {
+                    target: lineData?.target?.selector?.value ?? lineData?.target,
+                    text: lineData?.body?.value ?? "",
+                    lineid: lineData?.id?.split("/")?.pop()
+                }
+            }))
+            return { imgUrl, annotations, imgWidth, imgHeight}
+        }
+
+        async function init() {
+            const canvasUrl = window.frameElement?.getAttribute("canvasurl")
+            if (!canvasUrl) {
+                console.warn("No canvasurl attribute found on iframe")
+                return
+            }
+            const imageAndDimension = await getImageAndLineDimensionsText(canvasUrl)
+            if (!imageAndDimension) return
+            const { imgUrl, annotations, imgWidth, imgHeight } = imageAndDimension
+            if (!imgUrl) return
+            const container = document.getElementById("imageContainer")
+            container.innerHTML = `<img id="canvasImage" src="${imgUrl}" alt="Received from parent" />`
+            container.style.backgroundImage = "none"
+            const img = document.getElementById("canvasImage")
+
+            img.onload = () => {
+                annotations.forEach((anno, index) => {
+                    const { x, y, w, h } = parseXYWH(anno.target)
+                    const left = (x / imgWidth) * 100
+                    const top = (y / imgHeight) * 100
+                    const width = (w / imgWidth) * 100
+                    const height = (h / imgHeight) * 100
+
+                    const box = document.createElement("div")
+                    box.className = "overlayBox"
+                    box.style.left = left + "%"
+                    box.style.top = top + "%"
+                    box.style.width = width + "%"
+                    box.style.height = height + "%"
+                    box.title = anno.text
+                    box.dataset.lineserverid = anno.lineid
+                    box.dataset.lineid = index
+
+                    box.addEventListener("mouseenter", () => {
+                        if (!anno.text) return
+                        if (!box.querySelector(".tooltip")) {
+                            const tooltip = document.createElement("div")
+                            tooltip.className = "tooltip"
+                            tooltip.innerText = anno.text
+                            box.appendChild(tooltip)
+                        }
+                    })
+
+                    box.addEventListener("mouseleave", () => {
+                        const tooltip = box.querySelector(".tooltip")
+                        if (tooltip) {
+                            tooltip.remove()
+                        }
+                    })
+
+                    box.addEventListener("click", () => {
+                        window.parent.postMessage({ type: "RETURN_LINE_ID", lineid: anno.lineid, lineIndex: index }, "*" )
+                        document.querySelectorAll('.overlayBox.clicked').forEach(el => el.classList.remove('clicked'))
+                        box.classList.add('clicked')
+                    })
+                    container.appendChild(box)
+                })
+            }
+        }
+        window.onload = init
+    </script>
+</body>
+</html>
