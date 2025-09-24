@@ -229,7 +229,7 @@ class IIIFDataService {
             const contentType = response.headers.get('content-type');
             
             // Check if response is JSON (indicating info.json)
-            if (contentType && contentType.includes('application/json')) {
+            if (contentType && (contentType.includes('application/json') || contentType.includes('application/ld+json'))) {
                 const infoData = await response.json();
                 
                 // Validate this is a IIIF Image API info.json
