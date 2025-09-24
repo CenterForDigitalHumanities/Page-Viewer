@@ -1,0 +1,187 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+        
+      - name: Create deployment directory
+        run: |
+          mkdir -p _site
+          
+      - name: Copy files to deployment directory
+        run: |
+          # Copy main application files
+          cp index.html _site/
+          cp viewer.js _site/
+          cp iiif-data-service.js _site/
+          cp ui-manager.js _site/
+          cp message-handler.js _site/
+          cp styles.css _site/
+          
+          # Copy documentation
+          cp README.md _site/
+          cp CONTRIBUTING.md _site/
+          cp COPILOT.md _site/
+          cp DEVELOPMENT.md _site/
+          cp CODE_OF_CONDUCT.md _site/
+          cp SECURITY.md _site/
+          cp CHANGELOG.md _site/
+          cp LICENSE _site/
+          
+          # Copy GitHub templates (for reference)
+          mkdir -p _site/.github
+          cp -r .github/ISSUE_TEMPLATE _site/.github/
+          cp .github/PULL_REQUEST_TEMPLATE.md _site/.github/
+          
+      - name: Create demo page
+        run: |
+          cat > _site/demo.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>IIIF Page Viewer Demo</title>
+              <style>
+                  body {
+                      font-family: Arial, sans-serif;
+                      max-width: 1200px;
+                      margin: 0 auto;
+                      padding: 20px;
+                      line-height: 1.6;
+                  }
+                  .demo-section {
+                      margin: 2rem 0;
+                      padding: 1rem;
+                      border: 1px solid #ddd;
+                      border-radius: 5px;
+                  }
+                  iframe {
+                      width: 100%;
+                      height: 500px;
+                      border: 1px solid #ccc;
+                      border-radius: 3px;
+                  }
+                  .manifest-url {
+                      background: #f5f5f5;
+                      padding: 10px;
+                      border-radius: 3px;
+                      font-family: monospace;
+                      word-break: break-all;
+                      margin: 10px 0;
+                  }
+                  .load-button {
+                      background: #007cba;
+                      color: white;
+                      border: none;
+                      padding: 10px 15px;
+                      border-radius: 3px;
+                      cursor: pointer;
+                      margin: 5px;
+                  }
+                  .load-button:hover {
+                      background: #005a87;
+                  }
+              </style>
+          </head>
+          <body>
+              <h1>IIIF Page Viewer Demo</h1>
+              
+              <p>This demo shows the IIIF Page Viewer in action with real IIIF manifests from cultural institutions.</p>
+              
+              <div class="demo-section">
+                  <h2>Live Demo</h2>
+                  <p>Click the buttons below to load different IIIF manifests:</p>
+                  
+                  <button class="load-button" onclick="loadManifest('https://iiif.io/api/presentation/3.0/example/fixtures/001/manifest.json')">
+                      Load Example IIIF v3 Manifest
+                  </button>
+                  
+                  <button class="load-button" onclick="loadManifest('https://iiif.library.nulib.northwestern.edu/iiif/2/180682d0-4d51-0132-412f-0050569601ca-8/manifest.json')">
+                      Load Northwestern University Manuscript
+                  </button>
+                  
+                  <div class="manifest-url" id="current-manifest">
+                      No manifest loaded
+                  </div>
+                  
+                  <iframe id="viewer-iframe" src="index.html"></iframe>
+              </div>
+              
+              <div class="demo-section">
+                  <h2>How to Use</h2>
+                  <ol>
+                      <li>Click one of the demo buttons above to load a IIIF manifest</li>
+                      <li>Interact with the image (zoom, pan if supported)</li>
+                      <li>Click on annotation overlays to see detailed information</li>
+                      <li>Use keyboard navigation (Tab, Enter, Space) for accessibility</li>
+                  </ol>
+              </div>
+              
+              <div class="demo-section">
+                  <h2>Integration Example</h2>
+                  <p>To embed this viewer in your own website:</p>
+                  <pre><code>&lt;iframe src="https://centerfordigitalhumanities.github.io/Page-Viewer/?canvas=YOUR_MANIFEST_URL" 
+          width="800" 
+          height="600"&gt;&lt;/iframe&gt;</code></pre>
+              </div>
+              
+              <div class="demo-section">
+                  <h2>Documentation</h2>
+                  <ul>
+                      <li><a href="README.md">README</a> - Project overview and usage</li>
+                      <li><a href="CONTRIBUTING.md">Contributing Guide</a> - How to contribute</li>
+                      <li><a href="COPILOT.md">AI Development Guide</a> - Guide for AI assistants</li>
+                      <li><a href="DEVELOPMENT.md">Development Guide</a> - Detailed development setup</li>
+                      <li><a href="https://github.com/CenterForDigitalHumanities/Page-Viewer">GitHub Repository</a></li>
+                  </ul>
+              </div>
+              
+              <script>
+                  function loadManifest(manifestUrl) {
+                      const iframe = document.getElementById('viewer-iframe');
+                      const manifestDisplay = document.getElementById('current-manifest');
+                      
+                      iframe.src = 'index.html?canvas=' + encodeURIComponent(manifestUrl);
+                      manifestDisplay.textContent = 'Current manifest: ' + manifestUrl;
+                  }
+              </script>
+          </body>
+          </html>
+          EOF
+          
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '_site'
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

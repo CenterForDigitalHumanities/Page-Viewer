@@ -1,0 +1,131 @@
+name: Feature Request
+description: Suggest a new feature or enhancement for the IIIF Page Viewer
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature! Please provide as much detail as possible to help us understand your request.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve? Is your feature request related to a problem?
+      placeholder: I'm always frustrated when...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution you'd like to see implemented.
+      placeholder: I would like to see...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Solutions
+      description: Describe any alternative solutions or features you've considered.
+      placeholder: Another approach could be...
+    validations:
+      required: false
+
+  - type: dropdown
+    id: feature-type
+    attributes:
+      label: Feature Type
+      description: What type of feature is this?
+      options:
+        - IIIF Standard Compliance
+        - User Interface Enhancement
+        - Accessibility Improvement
+        - Performance Optimization
+        - Developer Experience
+        - Documentation
+        - Integration/API
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority Level
+      description: How important is this feature to you?
+      options:
+        - Low - Nice to have
+        - Medium - Would be helpful
+        - High - Important for my use case
+        - Critical - Blocking my project
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use Case
+      description: Describe your specific use case for this feature.
+      placeholder: |
+        In my digital humanities project, I need to...
+        The current workflow is...
+        This feature would help by...
+    validations:
+      required: true
+
+  - type: textarea
+    id: iiif-context
+    attributes:
+      label: IIIF Context
+      description: How does this relate to IIIF standards or best practices?
+      placeholder: This aligns with IIIF Presentation API v3 by...
+    validations:
+      required: false
+
+  - type: textarea
+    id: implementation-ideas
+    attributes:
+      label: Implementation Ideas
+      description: Do you have any ideas about how this could be implemented?
+      placeholder: |
+        This could be implemented by:
+        1. Adding a new method to...
+        2. Modifying the UI to...
+        3. Supporting additional IIIF properties...
+    validations:
+      required: false
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Examples or References
+      description: Provide links to similar features in other tools or examples of this functionality.
+      placeholder: |
+        - Similar feature in Tool X: https://example.com
+        - IIIF specification reference: https://iiif.io/api/...
+        - Example manifest that would benefit: https://...
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      description: Are you interested in contributing to this feature?
+      options:
+        - label: I would like to work on implementing this feature
+        - label: I can help with testing this feature
+        - label: I can provide additional IIIF manifests for testing
+        - label: I can help with documentation for this feature
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context, screenshots, or mockups about the feature request here.
+    validations:
+      required: false

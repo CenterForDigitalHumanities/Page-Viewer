@@ -1,0 +1,105 @@
+name: Bug Report
+description: Report a bug or issue with the IIIF Page Viewer
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the following information to help us understand and reproduce the issue.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+      placeholder: Describe what happened and what you expected to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Please provide detailed steps to reproduce the issue.
+      placeholder: |
+        1. Go to '...'
+        2. Load IIIF manifest '...'
+        3. Click on '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: iiif-manifest
+    attributes:
+      label: IIIF Manifest URL
+      description: If the issue is related to a specific IIIF manifest, please provide the URL.
+      placeholder: https://example.com/iiif/manifest.json
+    validations:
+      required: false
+
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser
+      description: Which browser are you using?
+      options:
+        - Chrome
+        - Firefox
+        - Safari
+        - Edge
+        - Other (specify in additional context)
+    validations:
+      required: true
+
+  - type: input
+    id: browser-version
+    attributes:
+      label: Browser Version
+      description: What version of the browser are you using?
+      placeholder: e.g., Chrome 118.0.5993.88
+    validations:
+      required: true
+
+  - type: dropdown
+    id: device
+    attributes:
+      label: Device Type
+      description: What type of device are you using?
+      options:
+        - Desktop/Laptop
+        - Mobile Phone
+        - Tablet
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: console-errors
+    attributes:
+      label: Console Errors
+      description: Please check the browser's developer console for errors and paste them here.
+      placeholder: |
+        Error: Failed to fetch manifest
+        at IIIFDataService.fetchCanvasData (iiif-data-service.js:45)
+      render: shell
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here, including screenshots if helpful.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: testing
+    attributes:
+      label: Testing Checklist
+      description: Have you tested this issue?
+      options:
+        - label: I have tested this in multiple browsers
+        - label: I have checked the browser console for errors
+        - label: I have verified the IIIF manifest is valid (if applicable)
+        - label: I have searched existing issues for duplicates

@@ -1,0 +1,203 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Install dependencies (if package.json has deps)
+      run: |
+        if [ -f package.json ] && grep -q '"dependencies"' package.json; then
+          npm ci
+        else
+          echo "No dependencies to install"
+        fi
+        
+    - name: Start HTTP server
+      run: |
+        python3 -m http.server 8000 &
+        SERVER_PID=$!
+        echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
+        sleep 2
+        
+    - name: Test server response
+      run: |
+        curl -f http://localhost:8000/index.html || exit 1
+        echo "✅ Server is responding"
+        
+    - name: Validate HTML
+      run: |
+        # Check if HTML files are valid
+        for file in *.html; do
+          if [ -f "$file" ]; then
+            echo "Checking $file..."
+            # Basic validation - check for DOCTYPE and closing tags
+            if ! grep -q "<!DOCTYPE" "$file"; then
+              echo "❌ Missing DOCTYPE in $file"
+              exit 1
+            fi
+            if ! grep -q "</html>" "$file"; then
+              echo "❌ Missing closing </html> tag in $file"
+              exit 1
+            fi
+            echo "✅ $file appears valid"
+          fi
+        done
+        
+    - name: Validate JavaScript modules
+      run: |
+        # Check JavaScript files for basic syntax issues
+        for file in *.js; do
+          if [ -f "$file" ]; then
+            echo "Checking $file..."
+            # Use Node.js to check syntax
+            node -c "$file" || exit 1
+            echo "✅ $file syntax is valid"
+          fi
+        done
+        
+    - name: Check for required files
+      run: |
+        echo "Checking for required project files..."
+        required_files=(
+          "index.html"
+          "viewer.js"
+          "iiif-data-service.js"
+          "ui-manager.js"
+          "message-handler.js"
+          "styles.css"
+          "README.md"
+          "CONTRIBUTING.md"
+          "COPILOT.md"
+          "LICENSE"
+        )
+        
+        for file in "${required_files[@]}"; do
+          if [ ! -f "$file" ]; then
+            echo "❌ Missing required file: $file"
+            exit 1
+          else
+            echo "✅ Found: $file"
+          fi
+        done
+        
+    - name: Test IIIF viewer functionality
+      run: |
+        # Test that the viewer loads with URL parameters
+        response=$(curl -s -w "%{http_code}" http://localhost:8000/?canvas=test)
+        if [[ ${response: -3} == "200" ]]; then
+          echo "✅ Viewer responds to URL parameters"
+        else
+          echo "❌ Viewer failed to respond properly"
+          exit 1
+        fi
+        
+    - name: Cleanup
+      if: always()
+      run: |
+        if [ ! -z "$SERVER_PID" ]; then
+          kill $SERVER_PID || true
+        fi
+
+  lint-documentation:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Check Markdown files
+      run: |
+        echo "Checking Markdown files for basic issues..."
+        
+        # Check for required documentation files
+        docs=(
+          "README.md"
+          "CONTRIBUTING.md" 
+          "COPILOT.md"
+          "DEVELOPMENT.md"
+          "CODE_OF_CONDUCT.md"
+          "SECURITY.md"
+          "CHANGELOG.md"
+        )
+        
+        for doc in "${docs[@]}"; do
+          if [ ! -f "$doc" ]; then
+            echo "❌ Missing documentation file: $doc"
+            exit 1
+          fi
+          
+          # Check file is not empty
+          if [ ! -s "$doc" ]; then
+            echo "❌ Documentation file is empty: $doc"
+            exit 1
+          fi
+          
+          echo "✅ Found and validated: $doc"
+        done
+        
+    - name: Validate GitHub templates
+      run: |
+        echo "Checking GitHub issue and PR templates..."
+        
+        templates=(
+          ".github/ISSUE_TEMPLATE/bug_report.yml"
+          ".github/ISSUE_TEMPLATE/feature_request.yml"
+          ".github/ISSUE_TEMPLATE/iiif_compatibility.yml"
+          ".github/ISSUE_TEMPLATE/config.yml"
+          ".github/PULL_REQUEST_TEMPLATE.md"
+        )
+        
+        for template in "${templates[@]}"; do
+          if [ ! -f "$template" ]; then
+            echo "❌ Missing template: $template"
+            exit 1
+          fi
+          echo "✅ Found template: $template"
+        done
+
+  accessibility-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Check HTML accessibility features
+      run: |
+        echo "Checking HTML for accessibility features..."
+        
+        # Check for semantic HTML elements
+        if ! grep -q 'role=' index.html; then
+          echo "⚠️  Consider adding ARIA roles to HTML elements"
+        fi
+        
+        # Check for aria-label usage
+        if grep -q 'aria-label' index.html; then
+          echo "✅ Found ARIA labels"
+        else
+          echo "⚠️  Consider adding ARIA labels for better accessibility"
+        fi
+        
+        # Check for proper heading structure
+        if grep -q '<h[1-6]' index.html; then
+          echo "✅ Found heading elements"
+        else
+          echo "⚠️  Consider adding heading elements for better structure"
+        fi
+        
+        echo "Accessibility check completed"
