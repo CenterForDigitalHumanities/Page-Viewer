@@ -13,8 +13,8 @@ class IIIFDataService {
      * @returns {Object} Parsed coordinates {x, y, w, h}
      */
     parseXYWH(target) {
-        const xywh = target.replace("xywh=pixel:", "").split(",").map(Number);
-        return { x: xywh[0], y: xywh[1], w: xywh[2], h: xywh[3] };
+        const xywh = target.replace("xywh=pixel:", "").split(",").map(Number)
+        return { x: xywh[0], y: xywh[1], w: xywh[2], h: xywh[3] }
     }
 
     /**
@@ -24,33 +24,33 @@ class IIIFDataService {
      */
     async fetchCanvasData(canvasUrl) {
         try {
-            const response = await fetch(canvasUrl);
+            const response = await fetch(canvasUrl)
             if (!response.ok) {
-                throw new Error(`Failed to fetch data from URL: ${response.status}`);
+                throw new Error(`Failed to fetch data from URL: ${response.status}`)
             }
 
-            const data = await response.json();
+            const data = await response.json()
             
             // Check if this is manifest data that contains canvases
             if (this.isManifestData(data)) {
-                return await this.extractCanvasFromManifest(data, canvasUrl);
+                return await this.extractCanvasFromManifest(data, canvasUrl)
             }
             
             // Check if this is direct canvas data with a target
             if (data.target) {
-                return await this.processCanvasData(data);
+                return await this.processCanvasData(data)
             }
             
             // If we have items but no target, this might be a canvas without annotations
             if (data.items || data.images) {
-                return await this.processDirectCanvasData(data);
+                return await this.processDirectCanvasData(data)
             }
             
-            throw new Error("Unrecognized data format - not a valid IIIF manifest or canvas");
+            throw new Error("Unrecognized data format - not a valid IIIF manifest or canvas")
             
         } catch (error) {
-            console.error("Error fetching IIIF canvas data:", error);
-            throw error;
+            console.error("Error fetching IIIF canvas data:", error)
+            throw error
         }
     }
 
@@ -62,15 +62,11 @@ class IIIFDataService {
     isManifestData(data) {
         // IIIF v3 manifest indicators
         if (data.type === "Manifest" || data["@type"] === "sc:Manifest") {
-            return true;
+            return true
         }
         
         // Check for sequences (IIIF v2) or items with canvases (IIIF v3)
-        if (data.sequences || (data.items && Array.isArray(data.items))) {
-            return true;
-        }
-        
-        return false;
+        return !!(data.sequences || (data.items && Array.isArray(data.items)))
     }
 
     /**
@@ -80,11 +76,11 @@ class IIIFDataService {
      * @returns {Promise<Object>} Canvas data
      */
     async extractCanvasFromManifest(manifestData, originalUrl) {
-        let targetCanvas = null;
+        let targetCanvas = null
         
         // Check if URL contains a canvas fragment identifier
-        const urlParts = originalUrl.split('#');
-        const canvasId = urlParts.length > 1 ? urlParts[1] : null;
+        const urlParts = originalUrl.split('#')
+        const canvasId = urlParts.length > 1 ? urlParts[1] : null
         
         // IIIF v3 format
         if (manifestData.items) {
@@ -94,34 +90,29 @@ class IIIFDataService {
                     item.id === canvasId || 
                     item.id.endsWith(`#${canvasId}`) ||
                     item.id.endsWith(`/${canvasId}`)
-                );
+                )
             }
-            if (!targetCanvas && manifestData.items.length > 0) {
-                // Use first canvas if no specific ID
-                targetCanvas = manifestData.items[0];
-            }
+            targetCanvas ??= manifestData.items[0]
         }
         // IIIF v2 format
-        else if (manifestData.sequences && manifestData.sequences[0]?.canvases) {
-            const canvases = manifestData.sequences[0].canvases;
+        else if (manifestData.sequences?.[0]?.canvases) {
+            const canvases = manifestData.sequences[0].canvases
             if (canvasId) {
                 targetCanvas = canvases.find(canvas => 
                     canvas["@id"] === canvasId || 
                     canvas["@id"].endsWith(`#${canvasId}`) ||
                     canvas["@id"].endsWith(`/${canvasId}`)
-                );
+                )
             }
-            if (!targetCanvas && canvases.length > 0) {
-                targetCanvas = canvases[0];
-            }
+            targetCanvas ??= canvases[0]
         }
         
         if (!targetCanvas) {
-            throw new Error("No canvas found in manifest");
+            throw new Error("No canvas found in manifest")
         }
         
         // Process the canvas data directly
-        return await this.processDirectCanvasData(targetCanvas);
+        return await this.processDirectCanvasData(targetCanvas)
     }
 
     /**
@@ -130,38 +121,38 @@ class IIIFDataService {
      * @returns {Promise<Object>} Processed canvas data
      */
     async processCanvasData(data) {
-        const target = await fetch(data.target);
+        const target = await fetch(data.target)
         
         if (!target.ok) {
-            throw new Error(`Failed to fetch target data: ${target.status}`);
+            throw new Error(`Failed to fetch target data: ${target.status}`)
         }
 
-        const targetData = await target.json();
-        const canvasInfo = await this.extractImageInfo(targetData);
+        const targetData = await target.json()
+        const canvasInfo = await this.extractImageInfo(targetData)
         
         // Fetch annotation data
         const annotations = await Promise.all(
             data.items.map(async (anno) => {
                 try {
-                    const line = await fetch(anno.id);
-                    if (!line.ok) return null;
+                    const line = await fetch(anno.id)
+                    if (!line.ok) return null
                     
-                    const lineData = await line.json();
+                    const lineData = await line.json()
                     return {
                         target: lineData?.target?.selector?.value ?? lineData?.target,
                         text: lineData?.body?.value ?? "",
                         lineid: lineData?.id?.split("/")?.pop()
-                    };
+                    }
                 } catch (error) {
-                    console.warn(`Failed to fetch annotation ${anno.id}:`, error);
-                    return null;
+                    console.warn(`Failed to fetch annotation ${anno.id}:`, error)
+                    return null
                 }
             })
-        );
+        )
 
-        const validAnnotations = annotations.filter(anno => anno !== null);
+        const validAnnotations = annotations.filter(anno => anno !== null)
         
-        return { ...canvasInfo, annotations: validAnnotations };
+        return { ...canvasInfo, annotations: validAnnotations }
     }
 
     /**
@@ -170,19 +161,19 @@ class IIIFDataService {
      * @returns {Promise<Object>} Processed canvas data
      */
     async processDirectCanvasData(canvasData) {
-        const canvasInfo = await this.extractImageInfo(canvasData);
+        const canvasInfo = await this.extractImageInfo(canvasData)
         
         // Look for annotations in the canvas
-        let annotations = [];
+        let annotations = []
         
         // IIIF v3 annotations
         if (canvasData.annotations) {
             // This would require additional processing for annotation pages
-            console.log("Canvas has annotations - additional processing may be needed");
+            console.log("Canvas has annotations - additional processing may be needed")
         }
         
         // For now, return with empty annotations if no annotation target is found
-        return { ...canvasInfo, annotations };
+        return { ...canvasInfo, annotations }
     }
 
     /**
@@ -192,21 +183,21 @@ class IIIFDataService {
      */
     async extractImageInfo(canvasData) {
         // Support both IIIF v2 and v3 formats
-        let imgUrl = canvasData?.items?.[0]?.items?.[0]?.body?.id ?? 
-                     canvasData?.images?.[0]?.resource?.["@id"] ??
-                     canvasData?.images?.[0]?.resource?.id;
+        const imgUrl = canvasData?.items?.[0]?.items?.[0]?.body?.id ?? 
+                       canvasData?.images?.[0]?.resource?.["@id"] ??
+                       canvasData?.images?.[0]?.resource?.id
                       
-        const imgWidth = canvasData?.width;
-        const imgHeight = canvasData?.height;
+        const imgWidth = canvasData?.width
+        const imgHeight = canvasData?.height
 
         if (!imgUrl || !imgWidth || !imgHeight) {
-            throw new Error("Missing required image data in IIIF canvas");
+            throw new Error("Missing required image data in IIIF canvas")
         }
 
         // Check if the image URL points to an info.json (IIIF Image API)
-        const processedImageUrl = await this.processIIIFImageUrl(imgUrl, imgWidth, imgHeight);
+        const processedImageUrl = await this.processIIIFImageUrl(imgUrl, imgWidth, imgHeight)
 
-        return { imgUrl: processedImageUrl, imgWidth, imgHeight };
+        return { imgUrl: processedImageUrl, imgWidth, imgHeight }
     }
 
     /**
@@ -219,32 +210,32 @@ class IIIFDataService {
     async processIIIFImageUrl(imgUrl, maxWidth, maxHeight) {
         try {
             // First, try to fetch the URL to see if it returns info.json
-            const response = await fetch(imgUrl);
+            const response = await fetch(imgUrl)
             
             if (!response.ok) {
                 // If fetch fails, return original URL (might be a direct image)
-                return imgUrl;
+                return imgUrl
             }
 
-            const contentType = response.headers.get('content-type');
+            const contentType = response.headers.get('content-type')
             
             // Check if response is JSON (indicating info.json)
-            if (contentType && (contentType.includes('application/json') || contentType.includes('application/ld+json'))) {
-                const infoData = await response.json();
+            if (contentType?.includes('application/json') || contentType?.includes('application/ld+json')) {
+                const infoData = await response.json()
                 
                 // Validate this is a IIIF Image API info.json
                 if (this.isIIIFImageInfo(infoData)) {
-                    return this.constructIIIFImageUrl(infoData, maxWidth, maxHeight);
+                    return this.constructIIIFImageUrl(infoData, maxWidth, maxHeight)
                 }
             }
             
             // If it's not JSON or not a valid info.json, return original URL
-            return imgUrl;
+            return imgUrl
             
         } catch (error) {
-            console.warn('Error processing IIIF image URL:', error);
+            console.warn('Error processing IIIF image URL:', error)
             // Fallback to original URL if processing fails
-            return imgUrl;
+            return imgUrl
         }
     }
 
@@ -265,7 +256,7 @@ class IIIFDataService {
             )) ||
             // Basic validation - has required properties
             (data.width && data.height && data["@id"])
-        );
+        )
     }
 
     /**
@@ -276,35 +267,35 @@ class IIIFDataService {
      * @returns {string} Constructed IIIF Image URL
      */
     constructIIIFImageUrl(infoData, maxWidth, maxHeight) {
-        const baseUrl = infoData["@id"] || infoData.id;
-        const imageWidth = infoData.width;
-        const imageHeight = infoData.height;
+        const baseUrl = infoData["@id"] || infoData.id
+        const imageWidth = infoData.width
+        const imageHeight = infoData.height
         
         if (!baseUrl) {
-            throw new Error("No base URL found in IIIF Image API info");
+            throw new Error("No base URL found in IIIF Image API info")
         }
 
         // Calculate optimal size while maintaining aspect ratio
-        const aspectRatio = imageWidth / imageHeight;
-        let targetWidth = Math.min(maxWidth, imageWidth);
-        let targetHeight = Math.min(maxHeight, imageHeight);
+        const aspectRatio = imageWidth / imageHeight
+        let targetWidth = Math.min(maxWidth, imageWidth)
+        let targetHeight = Math.min(maxHeight, imageHeight)
         
         // Adjust to maintain aspect ratio
         if (targetWidth / aspectRatio > targetHeight) {
-            targetWidth = Math.floor(targetHeight * aspectRatio);
+            targetWidth = Math.floor(targetHeight * aspectRatio)
         } else {
-            targetHeight = Math.floor(targetWidth / aspectRatio);
+            targetHeight = Math.floor(targetWidth / aspectRatio)
         }
 
         // Check supported sizes and profiles for optimal parameters
-        const sizeParam = this.getBestSizeParameter(infoData, targetWidth, targetHeight);
+        const sizeParam = this.getBestSizeParameter(infoData, targetWidth, targetHeight)
         
         // Construct IIIF Image API URL: {baseUrl}/{region}/{size}/{rotation}/{quality}.{format}
         // Using full region, calculated size, no rotation, default quality, jpg format
-        const imageUrl = `${baseUrl}/full/${sizeParam}/0/default.jpg`;
+        const imageUrl = `${baseUrl}/full/${sizeParam}/0/default.jpg`
         
-        console.log(`Constructed IIIF Image URL: ${imageUrl}`);
-        return imageUrl;
+        console.log(`Constructed IIIF Image URL: ${imageUrl}`)
+        return imageUrl
     }
 
     /**
@@ -320,22 +311,22 @@ class IIIFDataService {
             // Find the closest available size
             const availableSize = infoData.sizes.find(size => 
                 size.width >= targetWidth && size.height >= targetHeight
-            ) || infoData.sizes[infoData.sizes.length - 1]; // fallback to largest
+            ) ?? infoData.sizes[infoData.sizes.length - 1] // fallback to largest
             
             if (availableSize) {
-                return `${availableSize.width},${availableSize.height}`;
+                return `${availableSize.width},${availableSize.height}`
             }
         }
         
         // Check profile/compliance for size restrictions
-        const maxSize = this.getMaxAllowedSize(infoData);
+        const maxSize = this.getMaxAllowedSize(infoData)
         if (maxSize) {
-            targetWidth = Math.min(targetWidth, maxSize.width);
-            targetHeight = Math.min(targetHeight, maxSize.height);
+            targetWidth = Math.min(targetWidth, maxSize.width)
+            targetHeight = Math.min(targetHeight, maxSize.height)
         }
         
         // Use width,height format for explicit sizing
-        return `${targetWidth},${targetHeight}`;
+        return `${targetWidth},${targetHeight}`
     }
 
     /**
@@ -344,17 +335,17 @@ class IIIFDataService {
      * @returns {Object|null} Maximum size object or null
      */
     getMaxAllowedSize(infoData) {
-        if (infoData.profile && Array.isArray(infoData.profile)) {
-            for (const profileItem of infoData.profile) {
-                if (typeof profileItem === 'object' && profileItem.maxWidth && profileItem.maxHeight) {
-                    return {
-                        width: profileItem.maxWidth,
-                        height: profileItem.maxHeight
-                    };
+        if (!infoData.profile || !Array.isArray(infoData.profile)) return null
+        
+        for (const profileItem of infoData.profile) {
+            if (typeof profileItem === 'object' && profileItem.maxWidth && profileItem.maxHeight) {
+                return {
+                    width: profileItem.maxWidth,
+                    height: profileItem.maxHeight
                 }
             }
         }
-        return null;
+        return null
     }
 }
 
@@ -363,9 +354,9 @@ class IIIFDataService {
  */
 class UIManager {
     constructor(containerId = 'imageContainer') {
-        this.container = document.getElementById(containerId);
-        this.currentAnnotations = [];
-        this.eventHandlers = new Map();
+        this.container = document.getElementById(containerId)
+        this.currentAnnotations = []
+        this.eventHandlers = new Map()
     }
 
     /**
@@ -377,8 +368,8 @@ class UIManager {
             <div class="error-message" role="alert">
                 <strong>Error:</strong> ${message}
             </div>
-        `;
-        this.container.style.backgroundImage = "none";
+        `
+        this.container.style.backgroundImage = "none"
     }
 
     /**
@@ -390,7 +381,7 @@ class UIManager {
             <div class="loading" role="status" aria-live="polite">
                 ${message}
             </div>
-        `;
+        `
     }
 
     /**
@@ -402,13 +393,13 @@ class UIManager {
         return new Promise((resolve, reject) => {
             this.container.innerHTML = `
                 <img id="canvasImage" src="${imgUrl}" alt="IIIF Canvas Image" />
-            `;
-            this.container.style.backgroundImage = "none";
+            `
+            this.container.style.backgroundImage = "none"
             
-            const img = document.getElementById("canvasImage");
-            img.onload = () => resolve(img);
-            img.onerror = () => reject(new Error("Failed to load image"));
-        });
+            const img = document.getElementById("canvasImage")
+            img.onload = () => resolve(img)
+            img.onerror = () => reject(new Error("Failed to load image"))
+        })
     }
 
     /**
@@ -418,22 +409,22 @@ class UIManager {
      * @param {number} imgHeight - Original image height
      */
     renderAnnotations(annotations, imgWidth, imgHeight) {
-        this.currentAnnotations = annotations;
+        this.currentAnnotations = annotations
         
         annotations.forEach((anno, index) => {
-            if (!anno.target) return;
+            if (!anno.target) return
 
-            const { x, y, w, h } = new IIIFDataService().parseXYWH(anno.target);
+            const { x, y, w, h } = new IIIFDataService().parseXYWH(anno.target)
             
             // Calculate percentages for responsive positioning
-            const left = (x / imgWidth) * 100;
-            const top = (y / imgHeight) * 100;
-            const width = (w / imgWidth) * 100;
-            const height = (h / imgHeight) * 100;
+            const left = (x / imgWidth) * 100
+            const top = (y / imgHeight) * 100
+            const width = (w / imgWidth) * 100
+            const height = (h / imgHeight) * 100
 
-            const box = this.createAnnotationBox(anno, index, left, top, width, height);
-            this.container.appendChild(box);
-        });
+            const box = this.createAnnotationBox(anno, index, left, top, width, height)
+            this.container.appendChild(box)
+        })
     }
 
     /**
@@ -447,25 +438,25 @@ class UIManager {
      * @returns {HTMLElement} The created overlay box element
      */
     createAnnotationBox(anno, index, left, top, width, height) {
-        const box = document.createElement("div");
-        box.className = "overlayBox";
-        box.style.left = `${left}%`;
-        box.style.top = `${top}%`;
-        box.style.width = `${width}%`;
-        box.style.height = `${height}%`;
-        box.title = anno.text || "Annotation";
-        box.dataset.lineserverid = anno.lineid;
-        box.dataset.lineid = index;
+        const box = document.createElement("div")
+        box.className = "overlayBox"
+        box.style.left = `${left}%`
+        box.style.top = `${top}%`
+        box.style.width = `${width}%`
+        box.style.height = `${height}%`
+        box.title = anno.text || "Annotation"
+        box.dataset.lineserverid = anno.lineid
+        box.dataset.lineid = index
         
         // Add accessibility attributes
-        box.setAttribute('role', 'button');
-        box.setAttribute('tabindex', '0');
-        box.setAttribute('aria-label', `Annotation ${index + 1}: ${anno.text || 'No text available'}`);
+        box.setAttribute('role', 'button')
+        box.setAttribute('tabindex', '0')
+        box.setAttribute('aria-label', `Annotation ${index + 1}: ${anno.text || 'No text available'}`)
 
         // Add event listeners
-        this.attachAnnotationEvents(box, anno, index);
+        this.attachAnnotationEvents(box, anno, index)
 
-        return box;
+        return box
     }
 
     /**
@@ -477,28 +468,28 @@ class UIManager {
     attachAnnotationEvents(box, anno, index) {
         // Mouse enter - show tooltip
         box.addEventListener("mouseenter", () => {
-            this.showTooltip(box, anno.text);
-        });
+            this.showTooltip(box, anno.text)
+        })
 
         // Mouse leave - hide tooltip
         box.addEventListener("mouseleave", () => {
-            this.hideTooltip(box);
-        });
+            this.hideTooltip(box)
+        })
 
         // Click handler
         const clickHandler = () => {
-            this.selectAnnotation(box, anno.lineid, index);
-        };
+            this.selectAnnotation(box, anno.lineid, index)
+        }
 
-        box.addEventListener("click", clickHandler);
+        box.addEventListener("click", clickHandler)
         
         // Keyboard support
         box.addEventListener("keydown", (event) => {
             if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                clickHandler();
+                event.preventDefault()
+                clickHandler()
             }
-        });
+        })
     }
 
     /**
@@ -507,13 +498,13 @@ class UIManager {
      * @param {string} text - Tooltip text
      */
     showTooltip(box, text) {
-        if (!text || box.querySelector(".tooltip")) return;
+        if (!text || box.querySelector(".tooltip")) return
         
-        const tooltip = document.createElement("div");
-        tooltip.className = "tooltip";
-        tooltip.textContent = text;
-        tooltip.setAttribute('role', 'tooltip');
-        box.appendChild(tooltip);
+        const tooltip = document.createElement("div")
+        tooltip.className = "tooltip"
+        tooltip.textContent = text
+        tooltip.setAttribute('role', 'tooltip')
+        box.appendChild(tooltip)
     }
 
     /**
@@ -521,10 +512,8 @@ class UIManager {
      * @param {HTMLElement} box - The annotation box
      */
     hideTooltip(box) {
-        const tooltip = box.querySelector(".tooltip");
-        if (tooltip) {
-            tooltip.remove();
-        }
+        const tooltip = box.querySelector(".tooltip")
+        tooltip?.remove()
     }
 
     /**
@@ -536,30 +525,28 @@ class UIManager {
     selectAnnotation(box, lineid, index) {
         // Remove previous selection
         document.querySelectorAll('.overlayBox.clicked').forEach(el => {
-            el.classList.remove('clicked');
-            el.setAttribute('aria-selected', 'false');
-        });
+            el.classList.remove('clicked')
+            el.setAttribute('aria-selected', 'false')
+        })
         
         // Add selection to current box
-        box.classList.add('clicked');
-        box.setAttribute('aria-selected', 'true');
+        box.classList.add('clicked')
+        box.setAttribute('aria-selected', 'true')
         
         // Notify parent window
-        if (window.parent) {
-            window.parent.postMessage({
-                type: "RETURN_LINE_ID",
-                lineid: lineid,
-                lineIndex: index
-            }, "*");
-        }
+        window.parent?.postMessage({
+            type: "RETURN_LINE_ID",
+            lineid,
+            lineIndex: index
+        }, "*")
     }
 
     /**
      * Clear all content and reset container
      */
     clear() {
-        this.container.innerHTML = "";
-        this.currentAnnotations = [];
+        this.container.innerHTML = ""
+        this.currentAnnotations = []
     }
 }
 
@@ -568,8 +555,8 @@ class UIManager {
  */
 class MessageHandler {
     constructor(pageViewer) {
-        this.pageViewer = pageViewer;
-        this.setupMessageListener();
+        this.pageViewer = pageViewer
+        this.setupMessageListener()
     }
 
     /**
@@ -577,8 +564,8 @@ class MessageHandler {
      */
     setupMessageListener() {
         window.addEventListener("message", (event) => {
-            this.handleMessage(event);
-        });
+            this.handleMessage(event)
+        })
     }
 
     /**
@@ -586,24 +573,24 @@ class MessageHandler {
      * @param {MessageEvent} event - The message event
      */
     handleMessage(event) {
-        if (!event.data?.type) return;
+        if (!event.data?.type) return
 
         switch (event.data.type) {
             case "CANVAS_URL":
                 if (event.data.canvasUrl) {
-                    this.pageViewer.loadCanvas(event.data.canvasUrl);
+                    this.pageViewer.loadCanvas(event.data.canvasUrl)
                 }
-                break;
+                break
             case "MANIFEST_CANVAS":
                 if (event.data.manifestUrl) {
                     this.pageViewer.loadCanvasFromManifest(
                         event.data.manifestUrl, 
                         event.data.canvasId
-                    );
+                    )
                 }
-                break;
+                break
             default:
-                console.warn("Unknown message type:", event.data.type);
+                console.warn("Unknown message type:", event.data.type)
         }
     }
 }
@@ -613,9 +600,9 @@ class MessageHandler {
  */
 class PageViewer {
     constructor(containerId = 'imageContainer') {
-        this.dataService = new IIIFDataService();
-        this.uiManager = new UIManager(containerId);
-        this.messageHandler = new MessageHandler(this);
+        this.dataService = new IIIFDataService()
+        this.uiManager = new UIManager(containerId)
+        this.messageHandler = new MessageHandler(this)
     }
 
     /**
@@ -624,30 +611,30 @@ class PageViewer {
      */
     async loadCanvas(canvasUrl) {
         if (!canvasUrl) {
-            console.warn("No canvas URL provided");
-            this.uiManager.showError("No canvas URL provided");
-            return;
+            console.warn("No canvas URL provided")
+            this.uiManager.showError("No canvas URL provided")
+            return
         }
 
         try {
-            this.uiManager.showLoading("Loading canvas data...");
+            this.uiManager.showLoading("Loading canvas data...")
             
-            const canvasData = await this.dataService.fetchCanvasData(canvasUrl);
+            const canvasData = await this.dataService.fetchCanvasData(canvasUrl)
             if (!canvasData) {
-                throw new Error("No canvas data received");
+                throw new Error("No canvas data received")
             }
 
-            const { imgUrl, annotations, imgWidth, imgHeight } = canvasData;
+            const { imgUrl, annotations, imgWidth, imgHeight } = canvasData
             
             // Load the image first
-            await this.uiManager.renderImage(imgUrl);
+            await this.uiManager.renderImage(imgUrl)
             
             // Then render annotations
-            this.uiManager.renderAnnotations(annotations, imgWidth, imgHeight);
+            this.uiManager.renderAnnotations(annotations, imgWidth, imgHeight)
             
         } catch (error) {
-            console.error("Error loading canvas:", error);
-            this.uiManager.showError(`Failed to load canvas: ${error.message}`);
+            console.error("Error loading canvas:", error)
+            this.uiManager.showError(`Failed to load canvas: ${error.message}`)
         }
     }
 
@@ -657,8 +644,8 @@ class PageViewer {
      * @param {string} canvasId - ID of the specific canvas within the manifest
      */
     async loadCanvasFromManifest(manifestUrl, canvasId) {
-        const canvasUrl = canvasId ? `${manifestUrl}#${canvasId}` : manifestUrl;
-        await this.loadCanvas(canvasUrl);
+        const canvasUrl = canvasId ? `${manifestUrl}#${canvasId}` : manifestUrl
+        await this.loadCanvas(canvasUrl)
     }
 
     /**
@@ -666,19 +653,19 @@ class PageViewer {
      */
     init() {
         // Check if canvas URL is provided via URL parameters or other means
-        const urlParams = new URLSearchParams(window.location.search);
-        const canvasUrl = urlParams.get('canvas');
+        const urlParams = new URLSearchParams(window.location.search)
+        const canvasUrl = urlParams.get('canvas')
         
         if (canvasUrl) {
-            this.loadCanvas(canvasUrl);
+            this.loadCanvas(canvasUrl)
         } else {
-            this.uiManager.showLoading("Waiting for canvas URL from parent window...");
+            this.uiManager.showLoading("Waiting for canvas URL from parent window...")
         }
     }
 }
 
 // Initialize the page viewer when the DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    const viewer = new PageViewer();
-    viewer.init();
-});
+    const viewer = new PageViewer()
+    viewer.init()
+})
