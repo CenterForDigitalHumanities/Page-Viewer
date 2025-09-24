@@ -89,7 +89,7 @@
         }
 
         async function init() {
-            const canvasUrl = document.getElementById("fullPageFrame")?.getAttribute("canvasurl")
+            const canvasUrl = window.frameElement?.getAttribute("canvasurl")
             if (!canvasUrl) {
                 console.warn("No canvasurl attribute found on iframe")
                 return
