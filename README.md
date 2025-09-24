@@ -40,6 +40,7 @@ The JavaScript is organized into four main classes:
 - **Loading States**: Visual feedback during data fetching
 - **Interactive Annotations**: Clickable overlays with hover tooltips
 - **Parent Communication**: Sends annotation selection events to parent window
+- **IIIF Image API Support**: Automatically detects and handles info.json responses
 
 ## Usage
 
@@ -105,6 +106,21 @@ The canvas parameter supports:
 - Manifest URLs (uses first canvas)
 - Manifest URLs with fragment identifiers: `manifest.json#canvas-id`
 
+### IIIF Image API Support
+
+The viewer automatically detects when image URLs point to IIIF Image API info.json files and constructs optimized image URLs:
+
+- **Automatic Detection**: Checks if image URLs return JSON with IIIF Image API info
+- **Size Optimization**: Calculates optimal image dimensions while maintaining aspect ratio
+- **Profile Compliance**: Respects size limitations from IIIF Image API profiles
+- **Fallback Handling**: Falls back to original URLs if IIIF Image API processing fails
+
+Example flow:
+
+1. Canvas references image: `https://example.com/iiif/image123`
+2. Viewer detects this returns info.json with IIIF Image API data
+3. Constructs optimized URL: `https://example.com/iiif/image123/full/800,600/0/default.jpg`
+
 ## Browser Support
 
 - Modern browsers with ES6+ support
@@ -113,9 +129,10 @@ The canvas parameter supports:
 
 ## IIIF Compatibility
 
-- IIIF Presentation API v2.x
-- IIIF Presentation API v3.x
+- **IIIF Presentation API** v2.x and v3.x
+- **IIIF Image API** v2.x and v3.x (automatic info.json handling)
 - Supports standard XYWH coordinate selectors
+- Automatic image URL construction from IIIF Image API info.json responses
 
 ## Development
 
