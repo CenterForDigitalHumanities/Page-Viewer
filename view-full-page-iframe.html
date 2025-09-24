@@ -88,10 +88,8 @@
             return { imgUrl, annotations, imgWidth, imgHeight}
         }
 
-        async function init() {
-            const canvasUrl = document.getElementById("fullPageFrame")
-            console.log("window:", document)
-            console.log("frameElement:", document.getElementById("fullPageFrame"))
+        async function init(canvasUrl) {
+            console.log("canvasUrl:", canvasUrl)
             if (!canvasUrl) {
                 console.warn("No canvasurl attribute found on iframe")
                 return
@@ -149,7 +147,12 @@
                 })
             }
         }
-        window.onload = init
+        window.addEventListener("message", (event) => {
+            if (event.data?.type === "CANVAS_DATA") {
+                const canvasUrl = event.data.canvasUrl
+                init(canvasUrl)
+            }
+        })
     </script>
 </body>
 </html>
