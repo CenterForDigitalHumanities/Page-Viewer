@@ -1,0 +1,102 @@
+/* IIIF Page Viewer Styles */
+
+/* Main container for the image viewer */
+#imageContainer {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+    background-image: url(https://t-pen.org/TPEN/images/loading2.gif);
+    background-repeat: no-repeat;
+    background-position: center;
+    min-height: 200px;
+    width: 100%;
+    pointer-events: none;
+}
+
+/* The main canvas image */
+#canvasImage {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Overlay boxes for annotations */
+.overlayBox {
+    position: absolute;
+    border: 1px solid white;
+    pointer-events: auto;
+    box-sizing: border-box;
+    cursor: pointer;
+    transition: box-shadow 0.15s ease, border-color 0.15s ease;
+    border-radius: 2px;
+}
+
+/* Active/clicked state for overlay boxes */
+.overlayBox.clicked {
+    border-color: #ff6f3d;
+    border-width: 3px;
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.8);
+    z-index: 10;
+}
+
+/* Hover state for overlay boxes */
+.overlayBox:hover {
+    border-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+/* Tooltip styling */
+.tooltip {
+    background-color: #ff6f3d;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    position: absolute;
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-size: 12px;
+    pointer-events: none;
+    opacity: 0.9;
+    z-index: 5;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Error states */
+.error-message {
+    color: #d32f2f;
+    background-color: #ffebee;
+    padding: 12px;
+    border-radius: 4px;
+    border: 1px solid #e57373;
+    text-align: center;
+    font-family: Arial, sans-serif;
+}
+
+/* Loading states */
+.loading {
+    text-align: center;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    color: #666;
+}
+
+/* Accessibility improvements */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Focus styles for accessibility */
+.overlayBox:focus {
+    outline: 2px solid #ff6f3d;
+    outline-offset: 2px;
+}
