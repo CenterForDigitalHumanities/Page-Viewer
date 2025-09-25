@@ -29,15 +29,15 @@ export class MessageHandler {
 
         switch (event.data.type) {
             case "CANVAS_URL":
-                if (event.data.canvasUrl) {
-                    this.pageViewer.loadCanvas(event.data.canvasUrl)
+                if (event.data.canvas) {
+                    this.pageViewer.loadCanvas(event.data.canvas)
                 }
                 break
             case "MANIFEST_CANVAS":
-                if (event.data.manifestUrl) {
+                if (event.data.manifest) {
                     this.pageViewer.loadCanvasFromManifest(
-                        event.data.manifestUrl, 
-                        event.data.canvasId
+                        event.data.manifest, 
+                        event.data.canvas
                     )
                 }
                 break
