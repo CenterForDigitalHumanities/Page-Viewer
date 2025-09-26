@@ -28,7 +28,7 @@ class PageViewer {
      * Load and display a IIIF canvas
      * @param {string} canvasUrl - URL to the IIIF canvas or manifest containing the canvas
      */
-    async loadCanvas(canvasUrl) {
+    async loadCanvas(canvasUrl, annotationId = null) {
         if (!canvasUrl) {
             console.warn("No canvas URL provided")
             this.uiManager.showError("No canvas URL provided")
@@ -50,21 +50,26 @@ class PageViewer {
             
             // Then render annotations
             this.uiManager.renderAnnotations(annotations, imgWidth, imgHeight)
-            
+
+            if (annotationId !== null) {
+                document.querySelector(`.overlayBox[data-lineid="${annotationId}"]`).classList.add('clicked')
+                document.querySelector(`.overlayBox[data-lineid="${annotationId}"]`).setAttribute('aria-selected', 'true')
+                history.replaceState(null, '', `?canvas=${canvasUrl}&annotationId=${annotationId}`)
+            } else {
+                if (annotations.length === 0) {
+                    history.replaceState(null, '', `?canvas=${canvasUrl}`)
+                }
+                else {
+                    history.replaceState(null, '', `?canvas=${canvasUrl}&annotationId=0`)
+                    document.querySelector(`.overlayBox[data-lineid="0"]`).classList.add('clicked')
+                    document.querySelector(`.overlayBox[data-lineid="0"]`).setAttribute('aria-selected', 'true')
+                }
+            }
+
         } catch (error) {
             console.error("Error loading canvas:", error)
             this.uiManager.showError(`Failed to load canvas: ${error.message}`)
         }
-    }
-
-    /**
-     * Load a specific canvas from a manifest
-     * @param {string} manifestUrl - URL to the IIIF manifest
-     * @param {string} canvasId - ID of the specific canvas within the manifest
-     */
-    async loadCanvasFromManifest(manifestUrl, canvasId) {
-        const canvasUrl = canvasId ? `${manifestUrl}#${canvasId}` : manifestUrl
-        await this.loadCanvas(canvasUrl)
     }
 
     /**
@@ -74,9 +79,10 @@ class PageViewer {
         // Check if canvas URL is provided via URL parameters or other means
         const urlParams = new URLSearchParams(window.location.search)
         const canvasUrl = urlParams.get('canvas')
+        const annotationId = urlParams.get('annotationId')
         
         if (canvasUrl) {
-            this.loadCanvas(canvasUrl)
+            this.loadCanvas(canvasUrl, annotationId)
         } else {
             this.uiManager.showLoading("Waiting for canvas URL from parent window...")
         }
@@ -87,6 +93,25 @@ class PageViewer {
 document.addEventListener('DOMContentLoaded', () => {
     const viewer = new PageViewer()
     viewer.init()
+})
+
+window.addEventListener("message", event => {
+    if (event.data.type === "SELECT_ANNOTATION") {
+        const annotations = document.querySelectorAll('.overlayBox')
+        const index = event.data.lineId
+        annotations.forEach((anno, i) => {
+            if (i !== index) {
+                anno.classList.remove('clicked')
+                anno.setAttribute('aria-selected', 'false')
+            }
+        })
+        const el = annotations[index]
+        if (el) {
+            el.classList.add('clicked')
+            el.setAttribute('aria-selected', 'true')
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+    }
 })
 
 export { PageViewer }

@@ -188,6 +188,10 @@ export class UIManager {
         // Add selection to current box
         box.classList.add('clicked')
         box.setAttribute('aria-selected', 'true')
+        const urlParams = new URLSearchParams(window.location.search)
+        const canvasUrl = urlParams.get('canvas')
+        history.replaceState(null, '', `?canvas=${canvasUrl}&annotationId=${index}`)
+
         
         // Notify parent window
         window.parent?.postMessage({
