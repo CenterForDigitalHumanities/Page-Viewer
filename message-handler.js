@@ -28,17 +28,20 @@ export class MessageHandler {
         if (!event.data?.type) return
 
         switch (event.data.type) {
-            case "CANVAS_URL":
-                if (event.data.canvas) {
-                    this.pageViewer.loadCanvas(event.data.canvas)
-                }
-                break
-            case "MANIFEST_CANVAS":
-                if (event.data.manifest) {
-                    this.pageViewer.loadCanvasFromManifest(
-                        event.data.manifest, 
-                        event.data.canvas
-                    )
+            case "SELECT_ANNOTATION":
+                const annotations = document.querySelectorAll('.overlayBox')
+                const index = event.data.lineId
+                annotations.forEach((anno, i) => {
+                    if (i !== index) {
+                        anno.classList.remove('clicked')
+                        anno.setAttribute('aria-selected', 'false')
+                    }
+                })
+                const el = annotations[index]
+                if (el) {
+                    el.classList.add('clicked')
+                    el.setAttribute('aria-selected', 'true')
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
                 }
                 break
             default:

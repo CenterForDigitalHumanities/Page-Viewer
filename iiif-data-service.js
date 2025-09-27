@@ -18,12 +18,12 @@ export class IIIFDataService {
 
     /**
      * Fetch and parse IIIF canvas data with annotations
-     * @param {string} canvasUrl - URL to the IIIF canvas or manifest containing the canvas
+     * @param {string} pageId - ID of the IIIF page to load
      * @returns {Promise<Object|null>} Canvas data with image URL, annotations, and dimensions
      */
-    async fetchCanvasData(canvasUrl) {
+    async fetchPageData(pageId) {
         try {
-            const response = await fetch(canvasUrl)
+            const response = await fetch(pageId)
             if (!response.ok) {
                 throw new Error(`Failed to fetch data from URL: ${response.status}`)
             }
@@ -32,23 +32,23 @@ export class IIIFDataService {
             
             // Check if this is direct canvas data with a target
             if (data.target) {
-                return await this.processCanvasData(data)
+                return await this.processPageData(data)
             }
-            
-            throw new Error("Unrecognized data format - not a valid IIIF manifest or canvas")
-            
+
+            throw new Error("Unsupported IIIF page data format")
+
         } catch (error) {
-            console.error("Error fetching IIIF canvas data:", error)
+            console.error("Error fetching IIIF page data:", error)
             throw error
         }
     }
 
     /**
-     * Process canvas data that has annotation references
-     * @param {Object} data - Canvas data with target reference
-     * @returns {Promise<Object>} Processed canvas data
+     * Process page data that has annotation references
+     * @param {Object} data - Page data with target reference
+     * @returns {Promise<Object>} Processed page data
      */
-    async processCanvasData(data) {
+    async processPageData(data) {
         const target = await fetch(data.target)
         
         if (!target.ok) {

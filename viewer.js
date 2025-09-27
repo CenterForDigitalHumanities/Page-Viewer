@@ -25,26 +25,26 @@ class PageViewer {
     }
 
     /**
-     * Load and display a IIIF canvas
-     * @param {string} canvasUrl - URL to the IIIF canvas or manifest containing the canvas
+     * Load and display a IIIF page
+     * @param {string} pageId - ID of the IIIF page to load
      */
-    async loadCanvas(canvasUrl, annotationId = null) {
-        if (!canvasUrl) {
-            console.warn("No canvas URL provided")
-            this.uiManager.showError("No canvas URL provided")
+    async loadPage(pageId, annotationId = null) {
+        if (!pageId) {
+            console.warn("No page ID provided")
+            this.uiManager.showError("No page ID provided")
             return
         }
 
         try {
-            this.uiManager.showLoading("Loading canvas data...")
-            
-            const canvasData = await this.dataService.fetchCanvasData(canvasUrl)
-            if (!canvasData) {
-                throw new Error("No canvas data received")
+            this.uiManager.showLoading("Loading page data...")
+
+            const pageData = await this.dataService.fetchPageData(pageId)
+            if (!pageData) {
+                throw new Error("No page data received")
             }
 
-            const { imgUrl, annotations, imgWidth, imgHeight } = canvasData
-            
+            const { imgUrl, annotations, imgWidth, imgHeight } = pageData
+
             // Load the image first
             await this.uiManager.renderImage(imgUrl)
             
@@ -54,21 +54,21 @@ class PageViewer {
             if (annotationId !== null) {
                 document.querySelector(`.overlayBox[data-lineid="${annotationId}"]`).classList.add('clicked')
                 document.querySelector(`.overlayBox[data-lineid="${annotationId}"]`).setAttribute('aria-selected', 'true')
-                history.replaceState(null, '', `?canvas=${canvasUrl}&annotationId=${annotationId}`)
+                history.replaceState(null, '', `?pageId=${pageId}&annotationId=${annotationId}`)
             } else {
                 if (annotations.length === 0) {
-                    history.replaceState(null, '', `?canvas=${canvasUrl}`)
+                    history.replaceState(null, '', `?pageId=${pageId}`)
                 }
                 else {
-                    history.replaceState(null, '', `?canvas=${canvasUrl}&annotationId=0`)
+                    history.replaceState(null, '', `?pageId=${pageId}&annotationId=0`)
                     document.querySelector(`.overlayBox[data-lineid="0"]`).classList.add('clicked')
                     document.querySelector(`.overlayBox[data-lineid="0"]`).setAttribute('aria-selected', 'true')
                 }
             }
 
         } catch (error) {
-            console.error("Error loading canvas:", error)
-            this.uiManager.showError(`Failed to load canvas: ${error.message}`)
+            console.error("Error loading page:", error)
+            this.uiManager.showError(`Failed to load page: ${error.message}`)
         }
     }
 
@@ -76,15 +76,15 @@ class PageViewer {
      * Initialize the page viewer
      */
     init() {
-        // Check if canvas URL is provided via URL parameters or other means
+        // Check if page URL is provided via URL parameters or other means
         const urlParams = new URLSearchParams(window.location.search)
-        const canvasUrl = urlParams.get('canvas')
+        const pageId = urlParams.get('pageId')
         const annotationId = urlParams.get('annotationId')
-        
-        if (canvasUrl) {
-            this.loadCanvas(canvasUrl, annotationId)
+
+        if (pageId) {
+            this.loadPage(pageId, annotationId)
         } else {
-            this.uiManager.showLoading("Waiting for canvas URL from parent window...")
+            this.uiManager.showLoading("Waiting for page URL from parent window...")
         }
     }
 }
@@ -93,25 +93,6 @@ class PageViewer {
 document.addEventListener('DOMContentLoaded', () => {
     const viewer = new PageViewer()
     viewer.init()
-})
-
-window.addEventListener("message", event => {
-    if (event.data.type === "SELECT_ANNOTATION") {
-        const annotations = document.querySelectorAll('.overlayBox')
-        const index = event.data.lineId
-        annotations.forEach((anno, i) => {
-            if (i !== index) {
-                anno.classList.remove('clicked')
-                anno.setAttribute('aria-selected', 'false')
-            }
-        })
-        const el = annotations[index]
-        if (el) {
-            el.classList.add('clicked')
-            el.setAttribute('aria-selected', 'true')
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        }
-    }
 })
 
 export { PageViewer }
