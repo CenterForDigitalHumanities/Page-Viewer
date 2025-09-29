@@ -28,7 +28,7 @@ class PageViewer {
      * Load and display a IIIF page
      * @param {string} pageId - ID of the IIIF page to load
      */
-    async loadPage(pageId, annotationId = null) {
+    async loadPage(pageId, annotationId = null, manifestUrl = null) {
         if (!pageId) {
             console.warn("No page ID provided")
             this.uiManager.showError("No page ID provided")
@@ -38,7 +38,7 @@ class PageViewer {
         try {
             this.uiManager.showLoading("Loading page data...")
 
-            const pageData = await this.dataService.fetchPageData(pageId)
+            const pageData = await this.dataService.fetchPageData(pageId, manifestUrl)
             if (!pageData) {
                 throw new Error("No page data received")
             }
@@ -54,13 +54,13 @@ class PageViewer {
             if (annotationId !== null) {
                 document.querySelector(`.overlayBox[data-lineid="${annotationId}"]`).classList.add('clicked')
                 document.querySelector(`.overlayBox[data-lineid="${annotationId}"]`).setAttribute('aria-selected', 'true')
-                history.replaceState(null, '', `?pageId=${pageId}&annotationId=${annotationId}`)
+                history.replaceState(null, '', `?${manifestUrl ? `manifestUrl=${manifestUrl}&` : ''}pageId=${pageId}&annotationId=${annotationId}`)
             } else {
                 if (annotations.length === 0) {
-                    history.replaceState(null, '', `?pageId=${pageId}`)
+                    history.replaceState(null, '', `?${manifestUrl ? `manifestUrl=${manifestUrl}&` : ''}pageId=${pageId}`)
                 }
                 else {
-                    history.replaceState(null, '', `?pageId=${pageId}&annotationId=0`)
+                    history.replaceState(null, '', `?${manifestUrl ? `manifestUrl=${manifestUrl}&` : ''}pageId=${pageId}&annotationId=0`)
                     document.querySelector(`.overlayBox[data-lineid="0"]`).classList.add('clicked')
                     document.querySelector(`.overlayBox[data-lineid="0"]`).setAttribute('aria-selected', 'true')
                 }
@@ -78,13 +78,16 @@ class PageViewer {
     init() {
         // Check if page URL is provided via URL parameters or other means
         const urlParams = new URLSearchParams(window.location.search)
+        const manifestUrl = urlParams.get('manifestUrl')
         const pageId = urlParams.get('pageId')
         const annotationId = urlParams.get('annotationId')
 
-        if (pageId) {
+        if (manifestUrl && pageId) {
+            this.loadPage(pageId, annotationId, manifestUrl)
+        } else if (pageId) {
             this.loadPage(pageId, annotationId)
         } else {
-            this.uiManager.showLoading("Waiting for page URL from parent window...")
+            this.uiManager.showLoading("Waiting for manifest URL or page URL from parent window...")
         }
     }
 }

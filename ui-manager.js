@@ -189,8 +189,9 @@ export class UIManager {
         box.classList.add('clicked')
         box.setAttribute('aria-selected', 'true')
         const urlParams = new URLSearchParams(window.location.search)
-        const canvasUrl = urlParams.get('canvas')
-        history.replaceState(null, '', `?canvas=${canvasUrl}&annotationId=${index}`)
+        const pageId = urlParams.get('pageId')
+        const manifestUrl = urlParams.get('manifestUrl')
+        history.replaceState(null, '', `?${manifestUrl ? `manifestUrl=${manifestUrl}&` : ''}pageId=${pageId}&annotationId=${index}`)
 
         
         // Notify parent window

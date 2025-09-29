@@ -26,6 +26,7 @@ export class MessageHandler {
      */
     handleMessage(event) {
         if (!event.data?.type) return
+        let pageId
 
         switch (event.data.type) {
             case "SELECT_ANNOTATION":
@@ -43,6 +44,15 @@ export class MessageHandler {
                     el.setAttribute('aria-selected', 'true')
                     el.scrollIntoView({ behavior: 'smooth', block: 'center' })
                 }
+                break
+            case "ONLY_LOAD_PAGE":
+                pageId = event.data.pageId
+                this.pageViewer.loadPage(pageId)
+                break
+            case "LOAD_MANIFEST_PAGE":
+                const { manifestUrl, annotationId } = event.data
+                pageId = event.data.pageId
+                this.pageViewer.loadPage(pageId, annotationId || 0, manifestUrl)
                 break
             default:
                 console.warn("Unknown message type:", event.data.type)

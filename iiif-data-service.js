@@ -21,14 +21,24 @@ export class IIIFDataService {
      * @param {string} pageId - ID of the IIIF page to load
      * @returns {Promise<Object|null>} Canvas data with image URL, annotations, and dimensions
      */
-    async fetchPageData(pageId) {
+    async fetchPageData(pageId, manifestUrl = null) {
         try {
-            const response = await fetch(pageId)
+            const response = await fetch(manifestUrl || pageId)
             if (!response.ok) {
                 throw new Error(`Failed to fetch data from URL: ${response.status}`)
             }
 
             const data = await response.json()
+
+            // Check if this is manifest data that contains canvases
+            if (this.isManifestData(data)) {
+                const pageData = await fetch(pageId)
+                if (!pageData.ok) {
+                    throw new Error(`Failed to fetch page data from URL: ${pageData.status}`)
+                }
+                const pageJson = await pageData.json()
+                return await this.extractCanvasFromManifest(data, pageJson)
+            }
             
             // Check if this is direct canvas data with a target
             if (data.target) {
@@ -41,6 +51,85 @@ export class IIIFDataService {
             console.error("Error fetching IIIF page data:", error)
             throw error
         }
+    }
+
+     /**
+     * Check if the data represents a IIIF manifest
+     * @param {Object} data - The fetched JSON data
+     * @returns {boolean} True if this appears to be manifest data
+     */
+    isManifestData(data) {
+        // IIIF v3 manifest indicators
+        if (data.type === "Manifest" || data["@type"] === "sc:Manifest") {
+            return true
+        }
+
+        // Check for sequences (IIIF v2) or items with canvases (IIIF v3)
+        return !!(data.sequences || (data.items && Array.isArray(data.items) && data.items.some(item => item.type === "Canvas")))
+    }
+
+     /**
+     * Extract canvas data from a IIIF manifest
+     * @param {Object} manifestData - The manifest data
+     * @param {string} originalUrl - The original URL (may contain canvas fragment)
+     * @returns {Promise<Object>} Canvas data
+     */
+    async extractCanvasFromManifest(manifestData, pageData) {
+        let targetCanvas = null
+        let target = pageData.target
+
+        // IIIF v3 format
+        if (manifestData.items) {
+            // Find specific canvas by ID
+            targetCanvas = manifestData.items.find(item => 
+                item.id === target
+            )
+            targetCanvas ??= manifestData.items[0]
+        }
+        // IIIF v2 format
+        else if (manifestData.sequences?.[0]?.canvases) {
+            const canvases = manifestData.sequences[0].canvases
+            targetCanvas = canvases.find(canvas => 
+                canvas["@id"] === target
+            )
+            targetCanvas ??= canvases[0]
+        }
+
+        if (!targetCanvas) {
+            throw new Error("No canvas found in manifest")
+        }
+
+        // Process the canvas data directly
+        return await this.processDirectCanvasData(targetCanvas, pageData)
+    }
+
+     /**
+     * Process direct canvas data (from manifest or direct canvas)
+     * @param {Object} canvasData - Direct canvas data
+     * @returns {Promise<Object>} Processed canvas data
+     */
+    async processDirectCanvasData(canvasData, pageData) {
+        const canvasInfo = await this.extractImageInfo(canvasData)
+
+        // Look for annotations in the canvas
+        let annotations = []
+
+        // IIIF v3 annotations
+        if (pageData.items) {
+            // This would require additional processing for annotation pages
+            annotations = await Promise.all(
+                pageData.items.map(async (anno) => {
+                    return {
+                        target: anno?.target?.selector?.value ?? anno?.target,
+                        text: anno?.body?.value ?? "",
+                        lineid: anno?.id?.split("/")?.pop(),
+                    }
+                })
+            ).then((results) => results.flat())
+        }
+
+        // For now, return with empty annotations if no annotation target is found
+        return { ...canvasInfo, annotations }
     }
 
     /**
