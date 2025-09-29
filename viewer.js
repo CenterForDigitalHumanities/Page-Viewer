@@ -51,8 +51,8 @@ class PageViewer {
             // Then render annotations
             this.uiManager.renderAnnotations(annotations, imgWidth, imgHeight)
 
-            const idx = annotations.findIndex(anno => anno.lineid === annotation)
-            const annotationId = idx !== -1 ? idx : null
+            let idx = null
+            let annotationId = null
             if(typeof canvas !== "string" && this.dataService.isValidUrl(canvas)) {
                 canvas = canvas.id
             }
@@ -61,6 +61,13 @@ class PageViewer {
             }
             if(typeof annotationPage !== "string" && this.dataService.isValidUrl(annotationPage)) {
                 annotationPage = annotationPage.id
+            }
+            if (typeof annotation === "string" && this.dataService.isValidUrl(annotation)) {
+                idx = annotations.findIndex(anno => anno.lineid === annotation)
+                annotationId = idx !== -1 ? idx : null
+            } else if (typeof annotation === "object") {
+                idx = annotations.findIndex(anno => anno.lineid === annotation.id)
+                annotationId = idx !== -1 ? idx : null
             }
 
             if (annotationId !== null) {
