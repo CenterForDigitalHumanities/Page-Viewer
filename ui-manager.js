@@ -189,9 +189,20 @@ export class UIManager {
         box.classList.add('clicked')
         box.setAttribute('aria-selected', 'true')
         const urlParams = new URLSearchParams(window.location.search)
-        const pageId = urlParams.get('pageId')
-        const manifestUrl = urlParams.get('manifestUrl')
-        history.replaceState(null, '', `?${manifestUrl ? `manifestUrl=${manifestUrl}&` : ''}pageId=${pageId}&annotationId=${index}`)
+        let canvas = urlParams.get('canvas')
+        let manifest = urlParams.get('manifest')
+        let annotationPage = urlParams.get('annotationPage')
+        if(typeof canvas !== "string" && this.dataService.isValidUrl(canvas)) {
+            canvas = canvas.id
+        }
+        if(typeof manifest !== "string" && this.dataService.isValidUrl(manifest)) {
+            manifest = manifest.id
+        }
+        if(typeof annotationPage !== "string" && this.dataService.isValidUrl(annotationPage)) {
+            annotationPage = annotationPage.id
+        }
+
+        history.replaceState(null, '', `?${manifest ? `manifest=${manifest}&` : ''}canvas=${canvas}${annotationPage ? `&annotationPage=${annotationPage}` : ''}${lineid ? `&annotation=${lineid}` : ''}`)
 
         
         // Notify parent window

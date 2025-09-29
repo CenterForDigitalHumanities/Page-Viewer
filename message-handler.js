@@ -26,7 +26,7 @@ export class MessageHandler {
      */
     handleMessage(event) {
         if (!event.data?.type) return
-        let pageId
+        const { manifest = null, canvas, annotationPage = null, annotation = null } = event.data
 
         switch (event.data.type) {
             case "SELECT_ANNOTATION":
@@ -45,14 +45,23 @@ export class MessageHandler {
                     el.scrollIntoView({ behavior: 'smooth', block: 'center' })
                 }
                 break
-            case "ONLY_LOAD_PAGE":
-                pageId = event.data.pageId
-                this.pageViewer.loadPage(pageId)
+            case "MANIFEST_CANVAS_ANNOTATIONPAGE_ANNOTATION":
+                this.pageViewer.loadPage(canvas, manifest, annotationPage, annotation)
                 break
-            case "LOAD_MANIFEST_PAGE":
-                const { manifestUrl, annotationId } = event.data
-                pageId = event.data.pageId
-                this.pageViewer.loadPage(pageId, annotationId || null, manifestUrl)
+            case "MANIFEST_CANVAS_ANNOTATIONPAGE":
+                this.pageViewer.loadPage(canvas, manifest, annotationPage)
+                break
+            case "MANIFEST_CANVAS":
+                this.pageViewer.loadPage(canvas, manifest)
+                break
+            case "CANVAS":
+                this.pageViewer.loadPage(canvas)
+                break
+            case "CANVAS_ANNOTATIONPAGE":
+                this.pageViewer.loadPage(canvas, manifest, annotationPage)
+                break
+            case "CANVAS_ANNOTATIONPAGE_ANNOTATION":
+                this.pageViewer.loadPage(canvas, manifest, annotationPage, annotation)
                 break
             default:
                 console.warn("Unknown message type:", event.data.type)

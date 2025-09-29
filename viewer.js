@@ -28,22 +28,22 @@ class PageViewer {
      * Load and display a IIIF page
      * @param {string} pageId - ID of the IIIF page to load
      */
-    async loadPage(pageId, annotationId = null, manifestUrl = null) {
-        if (!pageId) {
-            console.warn("No page ID provided")
-            this.uiManager.showError("No page ID provided")
+    async loadPage(canvas, manifest, annotationPage, annotation = null) {
+        if (!canvas) {
+            console.warn("No canvas provided")
+            this.uiManager.showError("No canvas provided")
             return
         }
 
         try {
-            this.uiManager.showLoading("Loading page data...")
+            this.uiManager.showLoading("Loading canvas data...")
 
-            const pageData = await this.dataService.fetchPageData(pageId, manifestUrl)
-            if (!pageData) {
-                throw new Error("No page data received")
+            const canvasData = await this.dataService.fetchPageViewerData(canvas, manifest, annotationPage)
+            if (!canvasData) {
+                throw new Error("No canvas data received")
             }
 
-            const { imgUrl, annotations, imgWidth, imgHeight } = pageData
+            const { imgUrl, annotations, imgWidth, imgHeight } = canvasData
 
             // Load the image first
             await this.uiManager.renderImage(imgUrl)
@@ -51,16 +51,27 @@ class PageViewer {
             // Then render annotations
             this.uiManager.renderAnnotations(annotations, imgWidth, imgHeight)
 
+            const annotationId = annotation ? annotations.findIndex(anno => anno.lineid === annotation) : null
+            if(typeof canvas !== "string" && this.dataService.isValidUrl(canvas)) {
+                canvas = canvas.id
+            }
+            if(typeof manifest !== "string" && this.dataService.isValidUrl(manifest)) {
+                manifest = manifest.id
+            }
+            if(typeof annotationPage !== "string" && this.dataService.isValidUrl(annotationPage)) {
+                annotationPage = annotationPage.id
+            }
+
             if (annotationId !== null) {
                 document.querySelector(`.overlayBox[data-lineid="${annotationId}"]`).classList.add('clicked')
                 document.querySelector(`.overlayBox[data-lineid="${annotationId}"]`).setAttribute('aria-selected', 'true')
-                history.replaceState(null, '', `?${manifestUrl ? `manifestUrl=${manifestUrl}&` : ''}pageId=${pageId}&annotationId=${annotationId}`)
+                history.replaceState(null, '', `?${manifest ? `manifest=${manifest}&` : ''}canvas=${canvas}${annotationPage ? `&annotationPage=${annotationPage}` : ''}${annotation ? `&annotation=${annotation}` : ''}`)
             } else {
                 if (annotations.length === 0) {
-                    history.replaceState(null, '', `?${manifestUrl ? `manifestUrl=${manifestUrl}&` : ''}pageId=${pageId}`)
+                    history.replaceState(null, '', `?${manifest ? `manifest=${manifest}&` : ''}canvas=${canvas}`)
                 }
                 else {
-                    history.replaceState(null, '', `?${manifestUrl ? `manifestUrl=${manifestUrl}&` : ''}pageId=${pageId}&annotationId=0`)
+                    history.replaceState(null, '', `?${manifest ? `manifest=${manifest}&` : ''}canvas=${canvas}${annotationPage ? `&annotationPage=${annotationPage}` : ''}${annotation ? `&annotation=${annotations[0].lineid}` : ''}`)
                     document.querySelector(`.overlayBox[data-lineid="0"]`).classList.add('clicked')
                     document.querySelector(`.overlayBox[data-lineid="0"]`).setAttribute('aria-selected', 'true')
                 }
@@ -78,14 +89,23 @@ class PageViewer {
     init() {
         // Check if page URL is provided via URL parameters or other means
         const urlParams = new URLSearchParams(window.location.search)
-        const manifestUrl = urlParams.get('manifestUrl')
-        const pageId = urlParams.get('pageId')
-        const annotationId = urlParams.get('annotationId')
+        const canvas = urlParams.get('canvas')
+        const manifest = urlParams.get('manifest')
+        const annotationPage = urlParams.get('annotationPage')
+        const annotation = urlParams.get('annotation')
 
-        if (manifestUrl && pageId) {
-            this.loadPage(pageId, annotationId, manifestUrl)
-        } else if (pageId) {
-            this.loadPage(pageId, annotationId)
+        if (manifest && canvas && annotationPage && annotation) {
+            this.loadPage(canvas, manifest, annotationPage, annotation)
+        } else if (manifest && canvas && annotationPage) {
+            this.loadPage(canvas, manifest, annotationPage)
+        } else if (manifest && canvas) {
+            this.loadPage(canvas, manifest)
+        } else if (canvas) {
+            this.loadPage(canvas)
+        } else if (canvas && annotationPage) {
+            this.loadPage(canvas, null, annotationPage)
+        } else if (canvas && annotationPage && annotation) {
+            this.loadPage(canvas, null, annotationPage, annotation)
         } else {
             this.uiManager.showLoading("Waiting for manifest URL or page URL from parent window...")
         }
