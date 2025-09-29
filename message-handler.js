@@ -52,7 +52,7 @@ export class MessageHandler {
             case "LOAD_MANIFEST_PAGE":
                 const { manifestUrl, annotationId } = event.data
                 pageId = event.data.pageId
-                this.pageViewer.loadPage(pageId, annotationId || 0, manifestUrl)
+                this.pageViewer.loadPage(pageId, annotationId || null, manifestUrl)
                 break
             default:
                 console.warn("Unknown message type:", event.data.type)
