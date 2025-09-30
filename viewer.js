@@ -24,17 +24,26 @@ class PageViewer {
         this.messageHandler = new MessageHandler(this)
     }
 
+    /**
+     * Get the annotation ID based on the provided annotation reference
+     * @param {Array} annotations - List of annotations on the canvas
+     * @param {string|object} annotation - Annotation reference (ID string or object with ID)
+     * @returns {number|null} Index of the annotation in the list or null if not found
+     */
     getAnnotationId(annotations, annotation) {
-        let idx = null
-        let annotationId = null
+        if (!annotation) return null
+
         if (typeof annotation === "string" && this.dataService.isValidUrl(annotation)) {
-            idx = annotations.findIndex(anno => anno.lineid === annotation)
-            annotationId = idx !== -1 ? idx : null
-        } else if (typeof annotation === "object") {
-            idx = annotations.findIndex(anno => anno.lineid === annotation.id)
-            annotationId = idx !== -1 ? idx : null
+            const annotationId = annotations.findIndex(anno => anno.lineid === annotation)
+            return annotationId !== -1 ? annotationId : null
         }
-        return annotationId
+
+        if (typeof annotation === "object" && this.dataService.isValidJSON(annotation)) {
+            const annotationId = annotations.findIndex(anno => anno.lineid === annotation.id)
+            return annotationId !== -1 ? annotationId : null
+        }
+
+        return null
     }
 
     /**
@@ -67,10 +76,12 @@ class PageViewer {
             if(typeof canvas === "object" && this.dataService.isValidJSON(canvas)) {
                 canvas = canvas.id
             }
-            if(typeof manifest === "object" && this.dataService.isValidJSON(manifest)) {
+
+            if(manifest && (typeof manifest === "object" && this.dataService.isValidJSON(manifest))) {
                 manifest = manifest.id
             }
-            if(typeof annotationPage === "object" && this.dataService.isValidJSON(annotationPage)) {
+
+            if(annotationPage && (typeof annotationPage === "object" && this.dataService.isValidJSON(annotationPage))) {
                 annotationPage = annotationPage.id
             }
 
