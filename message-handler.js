@@ -46,9 +46,11 @@ export class MessageHandler {
                 }
                 break
             case "MANIFEST_CANVAS_ANNOTATIONPAGE_ANNOTATION":
+            case "CANVAS_ANNOTATIONPAGE_ANNOTATION":
                 this.pageViewer.loadPage(canvas, manifest, annotationPage, annotation)
                 break
             case "MANIFEST_CANVAS_ANNOTATIONPAGE":
+            case "CANVAS_ANNOTATIONPAGE":
                 this.pageViewer.loadPage(canvas, manifest, annotationPage)
                 break
             case "MANIFEST_CANVAS":
@@ -56,12 +58,6 @@ export class MessageHandler {
                 break
             case "CANVAS":
                 this.pageViewer.loadPage(canvas)
-                break
-            case "CANVAS_ANNOTATIONPAGE":
-                this.pageViewer.loadPage(canvas, manifest, annotationPage)
-                break
-            case "CANVAS_ANNOTATIONPAGE_ANNOTATION":
-                this.pageViewer.loadPage(canvas, manifest, annotationPage, annotation)
                 break
             default:
                 console.warn("Unknown message type:", event.data.type)

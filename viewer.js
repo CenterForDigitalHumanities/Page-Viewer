@@ -71,19 +71,21 @@ class PageViewer {
             }
 
             if (annotationId !== null) {
-                document.querySelector(`.overlayBox[data-lineid="${annotationId}"]`).classList.add('clicked')
-                document.querySelector(`.overlayBox[data-lineid="${annotationId}"]`).setAttribute('aria-selected', 'true')
+                document.querySelector(`.overlayBox[data-lineid="${annotationId}"]`)?.classList.add('clicked')
+                document.querySelector(`.overlayBox[data-lineid="${annotationId}"]`)?.setAttribute('aria-selected', 'true')
                 history.replaceState(null, '', `?${manifest ? `manifest=${manifest}&` : ''}canvas=${canvas}${annotationPage ? `&annotationPage=${annotationPage}` : ''}${annotation ? `&annotation=${annotation}` : ''}`)
-            } else {
-                if (annotations.length === 0) {
-                    history.replaceState(null, '', `?${manifest ? `manifest=${manifest}&` : ''}canvas=${canvas}`)
-                }
-                else {
-                    history.replaceState(null, '', `?${manifest ? `manifest=${manifest}&` : ''}canvas=${canvas}${annotationPage ? `&annotationPage=${annotationPage}` : ''}${annotation ? `&annotation=${annotations[0].lineid}` : ''}`)
-                    document.querySelector(`.overlayBox[data-lineid="0"]`).classList.add('clicked')
-                    document.querySelector(`.overlayBox[data-lineid="0"]`).setAttribute('aria-selected', 'true')
-                }
+                return
             }
+
+            if (annotations.length === 0) {
+                history.replaceState(null, '', `?${manifest ? `manifest=${manifest}&` : ''}canvas=${canvas}`)
+                return
+            }
+
+            history.replaceState(null, '', `?${manifest ? `manifest=${manifest}&` : ''}canvas=${canvas}${annotationPage ? `&annotationPage=${annotationPage}` : ''}${annotation ? `&annotation=${annotations[0].lineid}` : ''}`)
+            document.querySelector(`.overlayBox[data-lineid="0"]`).classList.add('clicked')
+            document.querySelector(`.overlayBox[data-lineid="0"]`).setAttribute('aria-selected', 'true')
+            return
 
         } catch (error) {
             console.error("Error loading page:", error)
@@ -102,11 +104,12 @@ class PageViewer {
         const annotationPage = urlParams.get('annotationPage')
         const annotation = urlParams.get('annotation')
 
-        if (manifest || canvas || annotationPage || annotation) {
-            this.loadPage(canvas, manifest, annotationPage, annotation)
-        } else {
-            this.uiManager.showLoading("Waiting for manifest URL or page URL from parent window...")
+        if (!canvas) {
+            this.uiManager.showLoading("Waiting for Canvas from parent window...")
+            return
         }
+
+        this.loadPage(canvas, manifest, annotationPage, annotation)
     }
 }
 

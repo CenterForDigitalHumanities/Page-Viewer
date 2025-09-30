@@ -117,18 +117,12 @@ export class IIIFDataService {
      */
     async extractCanvasFromManifest(manifestData, canvasData, annotationPageData) {
         let targetCanvas = null
-        let canvasID = canvasData.id || canvasData["@id"]
+        let canvasID = canvasData.id ?? canvasData["@id"] ?? false
 
-        // IIIF v3 format
-        if (manifestData.items) {
-            // Find specific canvas by ID
-            targetCanvas = manifestData.items.find(item => item.id === canvasID || item["@id"] === canvasID)
-            targetCanvas ??= manifestData.items[0]
-        }
-        // IIIF v2 format
-        else if (manifestData.sequences?.[0]?.canvases) {
-            const canvases = manifestData.sequences[0].canvases
-            targetCanvas = canvases.find(canvas => canvas["@id"] === canvasID)
+        // IIIF v3 format and IIIF v2 format
+        if (manifestData["@context"]) {
+            canvases = manifestData.sequences[0].canvases ?? manifestData.items
+            targetCanvas = canvases.find(item => item.id === canvasID || item["@id"] === canvasID)
             targetCanvas ??= canvases[0]
         }
 
