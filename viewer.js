@@ -24,6 +24,19 @@ class PageViewer {
         this.messageHandler = new MessageHandler(this)
     }
 
+    getAnnotationId(annotations, annotation) {
+        let idx = null
+        let annotationId = null
+        if (typeof annotation === "string" && this.dataService.isValidUrl(annotation)) {
+            idx = annotations.findIndex(anno => anno.lineid === annotation)
+            annotationId = idx !== -1 ? idx : null
+        } else if (typeof annotation === "object") {
+            idx = annotations.findIndex(anno => anno.lineid === annotation.id)
+            annotationId = idx !== -1 ? idx : null
+        }
+        return annotationId
+    }
+
     /**
      * Load and display a IIIF page
      * @param {string} pageId - ID of the IIIF page to load
@@ -51,24 +64,17 @@ class PageViewer {
             // Then render annotations
             this.uiManager.renderAnnotations(annotations, imgWidth, imgHeight)
 
-            let idx = null
-            let annotationId = null
-            if(typeof canvas !== "string" && this.dataService.isValidUrl(canvas)) {
+            if(typeof canvas === "object" && this.dataService.isValidJSON(canvas)) {
                 canvas = canvas.id
             }
-            if(typeof manifest !== "string" && this.dataService.isValidUrl(manifest)) {
+            if(typeof manifest === "object" && this.dataService.isValidJSON(manifest)) {
                 manifest = manifest.id
             }
-            if(typeof annotationPage !== "string" && this.dataService.isValidUrl(annotationPage)) {
+            if(typeof annotationPage === "object" && this.dataService.isValidJSON(annotationPage)) {
                 annotationPage = annotationPage.id
             }
-            if (typeof annotation === "string" && this.dataService.isValidUrl(annotation)) {
-                idx = annotations.findIndex(anno => anno.lineid === annotation)
-                annotationId = idx !== -1 ? idx : null
-            } else if (typeof annotation === "object") {
-                idx = annotations.findIndex(anno => anno.lineid === annotation.id)
-                annotationId = idx !== -1 ? idx : null
-            }
+
+            let annotationId = this.getAnnotationId(annotations, annotation)
 
             if (annotationId !== null) {
                 document.querySelector(`.overlayBox[data-lineid="${annotationId}"]`)?.classList.add('clicked')
