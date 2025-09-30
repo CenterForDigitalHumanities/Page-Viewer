@@ -25,7 +25,17 @@ export class IIIFDataService {
         try {
             new URL(str)
             return true
-        } catch (_) {
+        } catch (e) {
+            return false
+        }
+    }
+
+    isValidJSON(input) {
+        try {
+            const json = (typeof input === "string") ? JSON.parse(input) : JSON.parse(JSON.stringify(input))
+            return true
+        }
+        catch (e) {
             return false
         }
     }
@@ -47,8 +57,10 @@ export class IIIFDataService {
                 throw new Error(`Failed to fetch canvas/manifest/annotationPage/annotation data from URL: ${response.status}`)
             }
             typeData = await response.json()
-        } else {
+        } else if (typeof type === "object" && this.isValidJSON(type)) {
             typeData = type
+        } else {
+            throw new Error("Invalid canvas/manifest/annotationPage/annotation format")
         }
         return typeData
     }
