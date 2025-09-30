@@ -121,7 +121,7 @@ export class IIIFDataService {
 
         // IIIF v3 format and IIIF v2 format
         if (manifestData["@context"]) {
-            canvases = manifestData.sequences[0].canvases ?? manifestData.items
+            const canvases = manifestData?.sequences?.[0]?.canvases ?? manifestData?.items ?? []
             targetCanvas = canvases.find(item => item.id === canvasID || item["@id"] === canvasID)
             targetCanvas ??= canvases[0]
         }
