@@ -30,6 +30,11 @@ export class IIIFDataService {
         }
     }
 
+    /**
+     * Validate if input is valid JSON
+     * @param {string|Object} input - Input to validate
+     * @returns {boolean} True if valid JSON, false otherwise
+     */
     isValidJSON(input) {
         try {
             const json = (typeof input === "string") ? JSON.parse(input) : JSON.parse(JSON.stringify(input))
@@ -74,27 +79,29 @@ export class IIIFDataService {
     async fetchPageViewerData(canvas, manifest, annotationPage) {
         try {
             const canvasData = await this.getSpecificTypeData(canvas)
+            if (!canvasData) {
+                throw new Error("Unsupported IIIF data structure")
+            }
+
             const manifestData = manifest ? await this.getSpecificTypeData(manifest) : null
             const annotationPageData = annotationPage ? await this.getSpecificTypeData(annotationPage) : null
 
             if (manifestData) {
                 if (annotationPageData) {
                     return await this.extractCanvasFromManifest(manifestData, canvasData, annotationPageData)
-                } else {
-                    return await this.extractCanvasFromManifest(manifestData, canvasData, { items: [] })
                 }
-            } else if (canvasData) {
+                return await this.extractCanvasFromManifest(manifestData, canvasData, { items: [] })
+            }
+            
+            if (canvasData) {
                 if (annotationPageData) {
                     return await this.processDirectCanvasData(canvasData, annotationPageData)
-                } else if (canvasData.items && canvasData.items.length > 0 && canvasData.items[0].target) {
-                    return await this.processPageData(canvasData)
-                } else {
-                    return await this.processDirectCanvasData(canvasData, { items: [] })
                 }
-            } else {
-                throw new Error("Unsupported IIIF data structure")
+                if (canvasData.items && canvasData.items.length > 0 && canvasData.items[0].target) {
+                    return await this.processPageData(canvasData)
+                }
+                return await this.processDirectCanvasData(canvasData, { items: [] })
             }
-
         } catch (error) {
             console.error("Error fetching IIIF data:", error)
             throw error
