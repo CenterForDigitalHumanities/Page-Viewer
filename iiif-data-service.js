@@ -146,10 +146,12 @@ export class IIIFDataService {
         if (annotationPageData.items) {
             annotations = await Promise.all(
                 annotationPageData.items.map(async (anno) => {
+                    const line = await fetch(anno.id)
+                    const lineData = await line.json()
                     return {
-                        target: anno?.target?.selector?.value ?? anno?.target,
-                        text: anno?.body?.value ?? "",
-                        lineid: anno?.id,
+                        target: lineData?.target?.selector?.value ?? lineData?.target,
+                        text: lineData?.body?.value ?? "",
+                        lineid: lineData?.id,
                     }
                 })
             ).then((results) => results.flat())

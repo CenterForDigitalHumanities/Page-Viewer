@@ -101,7 +101,7 @@ export class UIManager {
         box.style.width = `${width}%`
         box.style.height = `${height}%`
         box.title = anno.text || "Annotation"
-        box.dataset.lineserverid = anno.lineid
+        box.dataset.lineserverid = anno.lineid.split('/').pop()
         box.dataset.lineid = index
         
         // Add accessibility attributes
