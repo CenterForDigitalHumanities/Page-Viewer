@@ -28,7 +28,7 @@ class PageViewer {
      * Load and display a IIIF page
      * @param {string} pageId - ID of the IIIF page to load
      */
-    async loadPage(canvas, manifest, annotationPage, annotation = null) {
+    async loadPage(canvas, manifest = null, annotationPage = null, annotation = null) {
         if (!canvas) {
             console.warn("No canvas provided")
             this.uiManager.showError("No canvas provided")
@@ -102,18 +102,8 @@ class PageViewer {
         const annotationPage = urlParams.get('annotationPage')
         const annotation = urlParams.get('annotation')
 
-        if (manifest && canvas && annotationPage && annotation) {
+        if (manifest || canvas || annotationPage || annotation) {
             this.loadPage(canvas, manifest, annotationPage, annotation)
-        } else if (manifest && canvas && annotationPage) {
-            this.loadPage(canvas, manifest, annotationPage)
-        } else if (manifest && canvas) {
-            this.loadPage(canvas, manifest)
-        } else if (canvas && annotationPage && annotation) {
-            this.loadPage(canvas, null, annotationPage, annotation)
-        } else if (canvas && annotationPage) {
-            this.loadPage(canvas, null, annotationPage)
-        } else if (canvas) {
-            this.loadPage(canvas)
         } else {
             this.uiManager.showLoading("Waiting for manifest URL or page URL from parent window...")
         }
