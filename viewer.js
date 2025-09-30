@@ -108,12 +108,12 @@ class PageViewer {
             this.loadPage(canvas, manifest, annotationPage)
         } else if (manifest && canvas) {
             this.loadPage(canvas, manifest)
-        } else if (canvas) {
-            this.loadPage(canvas)
-        } else if (canvas && annotationPage) {
-            this.loadPage(canvas, null, annotationPage)
         } else if (canvas && annotationPage && annotation) {
             this.loadPage(canvas, null, annotationPage, annotation)
+        } else if (canvas && annotationPage) {
+            this.loadPage(canvas, null, annotationPage)
+        } else if (canvas) {
+            this.loadPage(canvas)
         } else {
             this.uiManager.showLoading("Waiting for manifest URL or page URL from parent window...")
         }
