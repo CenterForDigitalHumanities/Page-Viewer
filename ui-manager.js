@@ -192,7 +192,7 @@ export class UIManager {
         let canvas = urlParams.get('canvas')
         let manifest = urlParams.get('manifest')
         let annotationPage = urlParams.get('annotationPage')
-        
+
         if(typeof canvas === "object" && this.dataService.isValidJSON(canvas)) {
             canvas = canvas.id
         }
