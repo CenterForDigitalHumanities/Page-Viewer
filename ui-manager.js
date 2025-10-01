@@ -101,7 +101,7 @@ export class UIManager {
         box.style.width = `${width}%`
         box.style.height = `${height}%`
         box.title = anno.text || "Annotation"
-        box.dataset.lineserverid = anno.lineid
+        box.dataset.lineserverid = anno.lineid.split('/').pop()
         box.dataset.lineid = index
         
         // Add accessibility attributes
@@ -188,6 +188,25 @@ export class UIManager {
         // Add selection to current box
         box.classList.add('clicked')
         box.setAttribute('aria-selected', 'true')
+        const urlParams = new URLSearchParams(window.location.search)
+        let canvas = urlParams.get('canvas')
+        let manifest = urlParams.get('manifest')
+        let annotationPage = urlParams.get('annotationPage')
+
+        if(typeof canvas === "object" && this.dataService.isValidJSON(canvas)) {
+            canvas = canvas.id
+        }
+
+        if(manifest && (typeof manifest === "object" && this.dataService.isValidJSON(manifest))) {
+            manifest = manifest.id
+        }
+
+        if(annotationPage && (typeof annotationPage === "object" && this.dataService.isValidJSON(annotationPage))) {
+            annotationPage = annotationPage.id
+        }
+
+        history.replaceState(null, '', `?${manifest ? `manifest=${manifest}&` : ''}canvas=${canvas}${annotationPage ? `&annotationPage=${annotationPage}` : ''}${lineid ? `&annotation=${lineid}` : ''}`)
+
         
         // Notify parent window
         window.parent?.postMessage({

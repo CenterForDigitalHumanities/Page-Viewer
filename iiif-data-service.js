@@ -17,109 +17,156 @@ export class IIIFDataService {
     }
 
     /**
-     * Fetch and parse IIIF canvas data with annotations
-     * @param {string} canvasUrl - URL to the IIIF canvas or manifest containing the canvas
-     * @returns {Promise<Object|null>} Canvas data with image URL, annotations, and dimensions
+     * Validate if a string is a well-formed URL
+     * @param {string} str - String to validate
+     * @returns {boolean} True if valid URL, false otherwise
      */
-    async fetchCanvasData(canvasUrl) {
+    isValidUrl(str) {
         try {
-            const response = await fetch(canvasUrl)
+            new URL(str)
+            return true
+        } catch (e) {
+            return false
+        }
+    }
+
+    /**
+     * Validate if input is valid JSON
+     * @param {string|Object} input - Input to validate
+     * @returns {boolean} True if valid JSON, false otherwise
+     */
+    isValidJSON(input) {
+        try {
+            const json = (typeof input === "string") ? JSON.parse(input) : JSON.parse(JSON.stringify(input))
+            return true
+        }
+        catch (e) {
+            return false
+        }
+    }
+
+    /**
+     * Fetch canvas data from URL or return if already an object
+     * @param {string|Object} canvas - Canvas URL or object
+     * @returns {Promise<Object>} Canvas data
+     */
+    async getSpecificTypeData(type) {
+        if (!type) {
+            throw new Error("No canvas/manifest/annotationPage/annotation provided")
+        }
+
+        let typeData = null
+        if (typeof type === "string" && this.isValidUrl(type)) {
+            const response = await fetch(type)
             if (!response.ok) {
-                throw new Error(`Failed to fetch data from URL: ${response.status}`)
+                throw new Error(`Failed to fetch canvas/manifest/annotationPage/annotation data from URL: ${response.status}`)
+            }
+            typeData = await response.json()
+        } else if (typeof type === "object" && this.isValidJSON(type)) {
+            typeData = type
+        } else {
+            throw new Error("Invalid canvas/manifest/annotationPage/annotation format")
+        }
+        return typeData
+    }
+    /**
+     * Fetch and parse IIIF canvas data with annotations
+     * @param {string|Object} canvas - Canvas URL or object
+     * @param {string|Object} manifest - Manifest URL or object (optional)
+     * @param {string|Object} annotationPage - Annotation Page URL or object (optional)
+     * @returns 
+     */
+    async fetchPageViewerData(canvas, manifest, annotationPage) {
+        try {
+            const canvasData = await this.getSpecificTypeData(canvas)
+            if (!canvasData) {
+                throw new Error("Unsupported IIIF data structure")
             }
 
-            const data = await response.json()
-            
-            // Check if this is manifest data that contains canvases
-            if (this.isManifestData(data)) {
-                return await this.extractCanvasFromManifest(data, canvasUrl)
+            const manifestData = manifest ? await this.getSpecificTypeData(manifest) : null
+            const annotationPageData = annotationPage ? await this.getSpecificTypeData(annotationPage) : null
+
+            if (manifestData) {
+                if (annotationPageData) {
+                    return await this.extractCanvasFromManifest(manifestData, canvasData, annotationPageData)
+                }
+                return await this.extractCanvasFromManifest(manifestData, canvasData, { items: [] })
             }
             
-            // Check if this is direct canvas data with a target
-            if (data.target) {
-                return await this.processCanvasData(data)
+            if (canvasData) {
+                if (annotationPageData) {
+                    return await this.processDirectCanvasData(canvasData, annotationPageData)
+                }
+                if (canvasData.items && canvasData.items.length > 0 && canvasData.items[0].target) {
+                    return await this.processPageData(canvasData)
+                }
+                return await this.processDirectCanvasData(canvasData, { items: [] })
             }
-            
-            // If we have items but no target, this might be a canvas without annotations
-            if (data.items || data.images) {
-                return await this.processDirectCanvasData(data)
-            }
-            
-            throw new Error("Unrecognized data format - not a valid IIIF manifest or canvas")
-            
         } catch (error) {
-            console.error("Error fetching IIIF canvas data:", error)
+            console.error("Error fetching IIIF data:", error)
             throw error
         }
     }
 
-    /**
-     * Check if the data represents a IIIF manifest
-     * @param {Object} data - The fetched JSON data
-     * @returns {boolean} True if this appears to be manifest data
-     */
-    isManifestData(data) {
-        // IIIF v3 manifest indicators
-        if (data.type === "Manifest" || data["@type"] === "sc:Manifest") {
-            return true
-        }
-        
-        // Check for sequences (IIIF v2) or items with canvases (IIIF v3)
-        return !!(data.sequences || (data.items && Array.isArray(data.items)))
-    }
-
-    /**
+     /**
      * Extract canvas data from a IIIF manifest
      * @param {Object} manifestData - The manifest data
-     * @param {string} originalUrl - The original URL (may contain canvas fragment)
-     * @returns {Promise<Object>} Canvas data
+     * @param {Object} canvasData - The canvas data or reference
+     * @param {Object} annotationPageData - Annotation page data (if any)
+     * @returns {Promise<Object>} Processed canvas data
      */
-    async extractCanvasFromManifest(manifestData, originalUrl) {
+    async extractCanvasFromManifest(manifestData, canvasData, annotationPageData) {
         let targetCanvas = null
-        
-        // Check if URL contains a canvas fragment identifier
-        const urlParts = originalUrl.split('#')
-        const canvasId = urlParts.length > 1 ? urlParts[1] : null
-        
-        // IIIF v3 format
-        if (manifestData.items) {
-            if (canvasId) {
-                // Find specific canvas by ID
-                targetCanvas = manifestData.items.find(item => 
-                    item.id === canvasId || 
-                    item.id.endsWith(`#${canvasId}`) ||
-                    item.id.endsWith(`/${canvasId}`)
-                )
-            }
-            targetCanvas ??= manifestData.items[0]
-        }
-        // IIIF v2 format
-        else if (manifestData.sequences?.[0]?.canvases) {
-            const canvases = manifestData.sequences[0].canvases
-            if (canvasId) {
-                targetCanvas = canvases.find(canvas => 
-                    canvas["@id"] === canvasId || 
-                    canvas["@id"].endsWith(`#${canvasId}`) ||
-                    canvas["@id"].endsWith(`/${canvasId}`)
-                )
-            }
+        let canvasID = canvasData.id ?? canvasData["@id"] ?? false
+
+        // IIIF v3 format and IIIF v2 format
+        if (manifestData["@context"]) {
+            const canvases = manifestData?.sequences?.[0]?.canvases ?? manifestData?.items ?? []
+            targetCanvas = canvases.find(item => item.id === canvasID || item["@id"] === canvasID)
             targetCanvas ??= canvases[0]
         }
-        
+
         if (!targetCanvas) {
             throw new Error("No canvas found in manifest")
         }
-        
-        // Process the canvas data directly
-        return await this.processDirectCanvasData(targetCanvas)
+
+        return await this.processDirectCanvasData(targetCanvas, annotationPageData)
+    }
+
+     /**
+     * Process direct canvas data (from manifest or direct canvas)
+     * @param {Object} canvasData - The canvas data
+     * @param {Object} annotationPageData - Annotation page data (if any)
+     * @returns {Promise<Object>} Processed canvas data
+     */
+    async processDirectCanvasData(canvasData, annotationPageData) {
+        const canvasInfo = await this.extractImageInfo(canvasData)
+        let annotations = []
+
+        // IIIF v3 annotations
+        if (annotationPageData.items) {
+            annotations = await Promise.all(
+                annotationPageData.items.map(async (anno) => {
+                    const line = await fetch(anno.id)
+                    const lineData = await line.json()
+                    return {
+                        target: lineData?.target?.selector?.value ?? lineData?.target,
+                        text: lineData?.body?.value ?? "",
+                        lineid: lineData?.id,
+                    }
+                })
+            ).then((results) => results.flat())
+        }
+
+        return { ...canvasInfo, annotations }
     }
 
     /**
-     * Process canvas data that has annotation references
-     * @param {Object} data - Canvas data with target reference
-     * @returns {Promise<Object>} Processed canvas data
+     * Process page data that has annotation references
+     * @param {Object} data - Page data with target reference
+     * @returns {Promise<Object>} Processed page data
      */
-    async processCanvasData(data) {
+    async processPageData(data) {
         const target = await fetch(data.target)
         
         if (!target.ok) {
@@ -128,6 +175,10 @@ export class IIIFDataService {
 
         const targetData = await target.json()
         const canvasInfo = await this.extractImageInfo(targetData)
+
+        if (data.items.length === 0) {
+            return { ...canvasInfo, annotations: [] }
+        }
         
         // Fetch annotation data
         const annotations = await Promise.all(
@@ -140,7 +191,7 @@ export class IIIFDataService {
                     return {
                         target: lineData?.target?.selector?.value ?? lineData?.target,
                         text: lineData?.body?.value ?? "",
-                        lineid: lineData?.id?.split("/")?.pop()
+                        lineid: lineData?.id
                     }
                 } catch (error) {
                     console.warn(`Failed to fetch annotation ${anno.id}:`, error)
@@ -152,27 +203,6 @@ export class IIIFDataService {
         const validAnnotations = annotations.filter(anno => anno !== null)
         
         return { ...canvasInfo, annotations: validAnnotations }
-    }
-
-    /**
-     * Process direct canvas data (from manifest or direct canvas)
-     * @param {Object} canvasData - Direct canvas data
-     * @returns {Promise<Object>} Processed canvas data
-     */
-    async processDirectCanvasData(canvasData) {
-        const canvasInfo = await this.extractImageInfo(canvasData)
-        
-        // Look for annotations in the canvas
-        let annotations = []
-        
-        // IIIF v3 annotations
-        if (canvasData.annotations) {
-            // This would require additional processing for annotation pages
-            console.log("Canvas has annotations - additional processing may be needed")
-        }
-        
-        // For now, return with empty annotations if no annotation target is found
-        return { ...canvasInfo, annotations }
     }
 
     /**
@@ -292,8 +322,6 @@ export class IIIFDataService {
         // Construct IIIF Image API URL: {baseUrl}/{region}/{size}/{rotation}/{quality}.{format}
         // Using full region, calculated size, no rotation, default quality, jpg format
         const imageUrl = `${baseUrl}/full/${sizeParam}/0/default.jpg`
-        
-        console.log(`Constructed IIIF Image URL: ${imageUrl}`)
         return imageUrl
     }
 
