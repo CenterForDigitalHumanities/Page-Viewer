@@ -1,4 +1,5 @@
 import { IIIFDataService } from './iiif-data-service.js'
+import { MagnifierTool, showMagnifier } from "./magnifier-tool.js"
 
 /**
  * UI Manager - Handles all user interface operations
@@ -13,6 +14,7 @@ export class UIManager {
         this.currentAnnotations = []
         this.eventHandlers = new Map()
         this.dataService = new IIIFDataService() // For coordinate parsing
+        this.magnifierTool = null
     }
 
     /**
@@ -41,18 +43,52 @@ export class UIManager {
     }
 
     /**
+     * Render the magnifier tool
+     */
+    renderMagnifier() {
+        this.container.innerHTML = ''
+
+        const magnifierButton = document.createElement('button')
+        magnifierButton.className = 'magnifier'
+        magnifierButton.type = 'button'
+        magnifierButton.textContent = 'Inspect'
+        
+        this.container.appendChild(magnifierButton)
+
+        magnifierButton.addEventListener('click', () => {
+            if (!this.magnifierTool) {
+                this.magnifierTool = new MagnifierTool()
+                document.body.appendChild(this.magnifierTool)
+            }
+
+            const img = this.container.querySelector('img')
+            if (img) this.magnifierTool.imageElem = img
+
+            showMagnifier(this.magnifierTool)
+            magnifierButton.style.display = 'none'
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && this.magnifierTool?.isMagnifierVisible) {
+                    this.magnifierTool.hideMagnifier()
+                    magnifierButton.style.display = 'block'
+                }
+            })
+        })
+    }
+
+    /**
      * Render the main image
      * @param {string} imgUrl - URL of the image to display
      * @returns {Promise<HTMLImageElement>} Promise that resolves when image loads
      */
     renderImage(imgUrl) {
         return new Promise((resolve, reject) => {
-            this.container.innerHTML = `
-                <img id="canvasImage" src="${imgUrl}" alt="IIIF Canvas Image" />
-            `
-            this.container.style.backgroundImage = "none"
-            
-            const img = document.getElementById("canvasImage")
+            const img = document.createElement('img')
+            img.id = 'canvasImage'
+            img.src = imgUrl
+            img.alt = 'IIIF Canvas Image'
+            this.container.appendChild(img)
+
             img.onload = () => resolve(img)
             img.onerror = () => reject(new Error("Failed to load image"))
         })
