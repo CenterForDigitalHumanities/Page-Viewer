@@ -80,13 +80,13 @@ export class MagnifierTool extends HTMLElement {
             const headerHeight = -60
             let x = e.clientX - imgRect.left
             let y = e.clientY - imgRect.top
-            x = Math.max(halfSize, Math.min(x, imgRect.width - halfSize))
-            let minY = halfSize
+            x = Math.max(-100 + halfSize, Math.min(x, imgRect.width + 100 - halfSize))
+            let minY = -100 + halfSize
             if (imgRect.top < headerHeight) {
                 const requiredTopOffset = headerHeight - imgRect.top
-                minY = Math.max(halfSize, requiredTopOffset + halfSize)
+                minY = Math.max(-100 + halfSize, requiredTopOffset + halfSize)
             }
-            y = Math.max(minY, Math.min(y, imgRect.height - halfSize))
+            y = Math.max(minY, Math.min(y, imgRect.height + 100 - halfSize))
 
             let rightPane = null
             const tpenInterface = document.querySelector('tpen-transcription-interface')

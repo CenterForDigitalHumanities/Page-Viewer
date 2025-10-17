@@ -51,7 +51,7 @@ export class UIManager {
         const magnifierButton = document.createElement('button')
         magnifierButton.className = 'magnifier'
         magnifierButton.type = 'button'
-        magnifierButton.textContent = 'Inspect'
+        magnifierButton.textContent = 'Inspect 🔍'
         
         this.container.appendChild(magnifierButton)
 
