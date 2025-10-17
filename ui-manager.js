@@ -1,5 +1,5 @@
 import { IIIFDataService } from './iiif-data-service.js'
-import { MagnifierTool, showMagnifier } from "./magnifier-tool.js"
+import { MagnifierTool, showMagnifier } from "https://app.t-pen.org/components/magnifier-tool/index.js"
 
 /**
  * UI Manager - Handles all user interface operations
@@ -58,6 +58,9 @@ export class UIManager {
         magnifierButton.addEventListener('click', () => {
             if (!this.magnifierTool) {
                 this.magnifierTool = new MagnifierTool()
+                this.magnifierTool.boundsOffset = 100
+                this.magnifierTool.render()
+                this.magnifierTool.addEventListeners()
                 document.body.appendChild(this.magnifierTool)
             }
 
