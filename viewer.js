@@ -67,6 +67,8 @@ class PageViewer {
 
             const { imgUrl, annotations, imgWidth, imgHeight } = canvasData
 
+            this.uiManager.renderMagnifier()
+
             // Load the image first
             await this.uiManager.renderImage(imgUrl)
             
