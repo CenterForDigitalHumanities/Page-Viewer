@@ -30,15 +30,14 @@ export class MessageHandler {
 
         switch (event.data.type) {
             case "SELECT_ANNOTATION":
-                const annotations = document.querySelectorAll('.overlayBox')
-                const index = event.data.lineId
-                annotations.forEach((anno, i) => {
-                    if (i !== index) {
-                        anno.classList.remove('clicked')
-                        anno.setAttribute('aria-selected', 'false')
+                const lineId = event.data.lineId.split('/').pop()
+                document.querySelectorAll(`.overlayBox`).forEach(box => {
+                    if (box.getAttribute('data-lineserverid') !== lineId) {
+                        box.classList.remove('clicked')
+                        box.setAttribute('aria-selected', 'false')
                     }
                 })
-                const el = annotations[index]
+                const el = document.querySelector(`.overlayBox[data-lineserverid="${lineId}"]`)
                 if (el) {
                     el.classList.add('clicked')
                     el.setAttribute('aria-selected', 'true')
