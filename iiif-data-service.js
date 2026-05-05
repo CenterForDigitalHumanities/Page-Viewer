@@ -7,13 +7,18 @@
  */
 export class IIIFDataService {
     /**
-     * Parse XYWH coordinate string into object
-     * @param {string} target - XYWH coordinate string
+     * Parse XYWH coordinate string into object.
+     * Tolerates the W3C Media Fragments forms `xywh=x,y,w,h`,
+     * `xywh=pixel:x,y,w,h`, `xywh=pct:x,y,w,h`, and URI fragments
+     * such as `https://canvas/#xywh=...`.
+     * @param {string} target - XYWH coordinate string or URI containing one
      * @returns {Object} Parsed coordinates {x, y, w, h}
      */
     parseXYWH(target) {
-        const xywh = target.replace("xywh=pixel:", "").split(",").map(Number)
-        return { x: xywh[0], y: xywh[1], w: xywh[2], h: xywh[3] }
+        const match = String(target ?? "").match(/xywh=(?:pixel:|pct:)?(-?[\d.]+),(-?[\d.]+),(-?[\d.]+),(-?[\d.]+)/)
+        if (!match) return { x: 0, y: 0, w: 0, h: 0 }
+        const [, x, y, w, h] = match.map(Number)
+        return { x, y, w, h }
     }
 
     /**
