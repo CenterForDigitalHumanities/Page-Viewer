@@ -26,40 +26,65 @@ export class MessageHandler {
      */
     handleMessage(event) {
         if (!event.data?.type) return
-        const { manifest = null, canvas, annotationPage = null, annotation = null } = event.data
 
         switch (event.data.type) {
-            case "SELECT_ANNOTATION":
-                const lineId = event.data.lineId.split('/').pop()
-                document.querySelectorAll(`.overlayBox`).forEach(box => {
-                    if (box.getAttribute('data-lineserverid') !== lineId) {
-                        box.classList.remove('clicked')
-                        box.setAttribute('aria-selected', 'false')
-                    }
-                })
-                const el = document.querySelector(`.overlayBox[data-lineserverid="${lineId}"]`)
-                if (el) {
-                    el.classList.add('clicked')
-                    el.setAttribute('aria-selected', 'true')
-                    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                }
+            // TPEN standard message types
+            case "TPEN_CONTEXT":
+                // Receive context from parent (project, page, canvas, etc.)
+                this.#handleTPENContext(event.data)
                 break
+
+            case "SELECT_ANNOTATION":
+            case "NAVIGATE_TO_LINE":
+            case "CURRENT_LINE_INDEX":
+            case "RETURN_LINE_ID":
+                // Standard navigation message - extract line ID and navigate
+                this.#handleLineNavigation(event.data)
+                break
+
+            // Legacy/custom canvas loading message types (backward compatible)
             case "MANIFEST_CANVAS_ANNOTATIONPAGE_ANNOTATION":
             case "CANVAS_ANNOTATIONPAGE_ANNOTATION":
-                this.pageViewer.loadPage(canvas, manifest, annotationPage, annotation)
-                break
             case "MANIFEST_CANVAS_ANNOTATIONPAGE":
             case "CANVAS_ANNOTATIONPAGE":
-                this.pageViewer.loadPage(canvas, manifest, annotationPage)
-                break
             case "MANIFEST_CANVAS":
-                this.pageViewer.loadPage(canvas, manifest)
-                break
             case "CANVAS":
-                this.pageViewer.loadPage(canvas)
+                this.pageViewer.loadPage(event.data.canvas, event.data.manifest, event.data.annotationPage, event.data.annotation)
+                break
+
+            case "REQUEST_TPEN_ID_TOKEN":
+                // Page-Viewer doesn't need auth
                 break
             default:
                 console.warn("Unknown message type:", event.data.type)
         }
+    }
+
+    /**
+     * Handle TPEN context message (informational - parent sharing context with viewer)
+     * @param {Object} data - TPEN context data
+     */
+    #handleTPENContext(data) {
+        // Store context if needed for future interactions
+        // Page-Viewer can use this to maintain state alignment with parent
+        if (data.canvas) {
+            // If parent explicitly sends a canvas, ensure we're viewing it
+            this.pageViewer.loadPage(data.canvas)
+        }
+    }
+
+    /**
+     * Handle line navigation from parent (SELECT_ANNOTATION, NAVIGATE_TO_LINE, etc.)
+     * @param {Object} data - Message data with lineId/lineid/annotation field
+     */
+    #handleLineNavigation(data) {
+        // Extract line ID from various possible field names
+        const lineId = data.lineId ?? data.lineid ?? data.annotation
+
+        if (!lineId) return
+
+        // Dispatch event for UI components to respond to line selection
+        // This allows other components (like transcription blocks) to update
+        this.pageViewer.uiManager?.highlightLine?.(lineId)
     }
 }
