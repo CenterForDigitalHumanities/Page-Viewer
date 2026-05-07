@@ -136,8 +136,8 @@ export class IIIFDataService {
      */
     async extractCanvasFromManifest(manifestData, canvasData, annotationPageData) {
         let targetCanvas = null
-        let canvasID = canvasData.id ?? canvasData["@id"] ?? false
 
+        let canvasID = this.isValidUrl(canvasData) ? canvasData : canvasData.id ?? canvasData["@id"]
         // IIIF v3 format and IIIF v2 format
         if (manifestData["@context"]) {
             const canvases = manifestData?.sequences?.[0]?.canvases ?? manifestData?.items ?? []
