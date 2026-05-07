@@ -218,15 +218,8 @@ export class UIManager {
      * @param {number} index - Line index
      */
     selectAnnotation(box, lineid, index) {
-        // Remove previous selection
-        document.querySelectorAll('.overlayBox.clicked').forEach(el => {
-            el.classList.remove('clicked')
-            el.setAttribute('aria-selected', 'false')
-        })
-        
-        // Add selection to current box
-        box.classList.add('clicked')
-        box.setAttribute('aria-selected', 'true')
+        if (!this.#setActiveAnnotation(box, true)) return
+
         const urlParams = new URLSearchParams(window.location.search)
         let canvas = urlParams.get('canvas')
         let manifest = urlParams.get('manifest')
@@ -253,6 +246,61 @@ export class UIManager {
             lineid,
             lineIndex: index
         }, "*")
+    }
+
+    /**
+     * Highlight an annotation overlay by line reference or index.
+     * Accepts full line URI, short line id, or numeric index.
+     * @param {string|number} lineRef - Line identifier or annotation index
+     * @returns {boolean} True if an overlay was highlighted
+     */
+    highlightAnnotation(lineRef) {
+        if (lineRef === undefined || lineRef === null) return false
+
+        const target = this.#resolveAnnotationTarget(lineRef)
+        return this.#setActiveAnnotation(target, true)
+    }
+
+    /**
+     * Resolve an overlay element by line reference.
+     * @param {string|number} lineRef - Line identifier or annotation index
+     * @returns {HTMLElement|null} Matching overlay element
+     */
+    #resolveAnnotationTarget(lineRef) {
+        if (typeof lineRef === 'number' || (typeof lineRef === 'string' && /^\d+$/.test(lineRef))) {
+            return document.querySelector(`.overlayBox[data-lineid="${Number(lineRef)}"]`)
+        }
+
+        if (typeof lineRef === 'string') {
+            const shortId = lineRef.split('/').pop()
+            return document.querySelector(`.overlayBox[data-lineserverid="${shortId}"]`)
+        }
+
+        return null
+    }
+
+    /**
+     * Apply active selection styles to one overlay and clear previous selection.
+     * @param {HTMLElement|null} target - Overlay box to activate
+     * @param {boolean} scrollToTarget - Scroll selected overlay into view
+     * @returns {boolean} True when target exists and was activated
+     */
+    #setActiveAnnotation(target, scrollToTarget = false) {
+        document.querySelectorAll('.overlayBox.clicked').forEach(el => {
+            el.classList.remove('clicked')
+            el.setAttribute('aria-selected', 'false')
+        })
+
+        if (!target) return false
+
+        target.classList.add('clicked')
+        target.setAttribute('aria-selected', 'true')
+
+        if (scrollToTarget) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+
+        return true
     }
 
     /**

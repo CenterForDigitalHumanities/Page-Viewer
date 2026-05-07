@@ -78,13 +78,10 @@ export class MessageHandler {
      * @param {Object} data - Message data with lineId/lineid/annotation field
      */
     #handleLineNavigation(data) {
-        // Extract line ID from various possible field names
-        const lineId = data.lineId ?? data.lineid ?? data.annotation
+        // Support both ID-based and index-based navigation payloads.
+        const lineRef = data.lineId ?? data.lineid ?? data.annotation ?? data.lineIndex ?? data.currentLineIndex
+        if (lineRef === undefined || lineRef === null) return
 
-        if (!lineId) return
-
-        // Dispatch event for UI components to respond to line selection
-        // This allows other components (like transcription blocks) to update
-        this.pageViewer.uiManager?.highlightLine?.(lineId)
+        this.pageViewer.uiManager?.highlightAnnotation?.(lineRef)
     }
 }
