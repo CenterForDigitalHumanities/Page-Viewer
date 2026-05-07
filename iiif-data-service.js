@@ -83,13 +83,27 @@ export class IIIFDataService {
      */
     async fetchPageViewerData(canvas, manifest, annotationPage) {
         try {
-            const canvasData = await this.getSpecificTypeData(canvas)
-            if (!canvasData) {
-                throw new Error("Unsupported IIIF data structure")
+            let canvasData = null
+
+            // Try to fetch canvas data, but don't throw immediately if it fails
+            try {
+                canvasData = await this.getSpecificTypeData(canvas)
+            } catch (error) {
+                // If we don't have a manifest to fall back to, throw now
+                if (!manifest) {
+                    throw error
+                }
+                console.warn("Failed to fetch canvas directly, will attempt to extract from manifest:", error.message)
+                // Use canvas reference as fallback
+                canvasData = canvas
             }
 
             const manifestData = manifest ? await this.getSpecificTypeData(manifest) : null
             const annotationPageData = annotationPage ? await this.getSpecificTypeData(annotationPage) : null
+
+            if (!canvasData) {
+                throw new Error("Unsupported IIIF data structure")
+            }
 
             if (manifestData) {
                 if (annotationPageData) {
@@ -122,8 +136,8 @@ export class IIIFDataService {
      */
     async extractCanvasFromManifest(manifestData, canvasData, annotationPageData) {
         let targetCanvas = null
-        let canvasID = canvasData.id ?? canvasData["@id"] ?? false
 
+        let canvasID = this.isValidUrl(canvasData) ? canvasData : canvasData.id ?? canvasData["@id"]
         // IIIF v3 format and IIIF v2 format
         if (manifestData["@context"]) {
             const canvases = manifestData?.sequences?.[0]?.canvases ?? manifestData?.items ?? []
