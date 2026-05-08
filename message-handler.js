@@ -35,6 +35,10 @@ export class MessageHandler {
                 break
 
             case "UPDATE_CURRENT_LINE":
+                if (!('currentLineId' in event.data)) {
+                    console.warn('[page-viewer] UPDATE_CURRENT_LINE missing currentLineId', event.data)
+                    break
+                }
                 this.#handleLineNavigation(event.data.currentLineId)
                 break
 
@@ -60,6 +64,6 @@ export class MessageHandler {
      */
     #handleLineNavigation(currentLineId) {
         if (!currentLineId) return
-        this.pageViewer.uiManager?.highlightAnnotation?.(currentLineId)
+        this.pageViewer.uiManager.highlightAnnotation(currentLineId)
     }
 }
