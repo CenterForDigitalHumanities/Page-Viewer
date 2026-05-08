@@ -21,67 +21,48 @@ export class MessageHandler {
     }
 
     /**
-     * Handle incoming messages from parent window
+     * Handle incoming messages from parent window. Page-Viewer accepts the
+     * lean TPEN_CONTEXT boot payload (canvas/manifest/annotationPage URIs +
+     * currentLineId) and UPDATE_CURRENT_LINE deltas. Auth is not used.
      * @param {MessageEvent} event - The message event
      */
     handleMessage(event) {
         if (!event.data?.type) return
 
         switch (event.data.type) {
-            // TPEN standard message types
             case "TPEN_CONTEXT":
-                // Receive context from parent (project, page, canvas, etc.)
                 this.#handleTPENContext(event.data)
                 break
 
-            case "SELECT_ANNOTATION":
-            case "NAVIGATE_TO_LINE":
-            case "CURRENT_LINE_INDEX":
-            case "RETURN_LINE_ID":
-                // Standard navigation message - extract line ID and navigate
-                this.#handleLineNavigation(event.data)
+            case "UPDATE_CURRENT_LINE":
+                this.#handleLineNavigation(event.data.currentLineId)
                 break
 
-            // Legacy/custom canvas loading message types (backward compatible)
-            case "MANIFEST_CANVAS_ANNOTATIONPAGE_ANNOTATION":
-            case "CANVAS_ANNOTATIONPAGE_ANNOTATION":
-            case "MANIFEST_CANVAS_ANNOTATIONPAGE":
-            case "CANVAS_ANNOTATIONPAGE":
-            case "MANIFEST_CANVAS":
-            case "CANVAS":
-                this.pageViewer.loadPage(event.data.canvas, event.data.manifest, event.data.annotationPage, event.data.annotation)
-                break
-
-            case "REQUEST_TPEN_ID_TOKEN":
-                // Page-Viewer doesn't need auth
-                break
             default:
-                console.warn("Unknown message type:", event.data.type)
+                break
         }
     }
 
     /**
-     * Handle TPEN context message (informational - parent sharing context with viewer)
+     * Handle TPEN context message. Loads the active canvas and highlights
+     * the current line if one is set.
      * @param {Object} data - TPEN context data
      */
     #handleTPENContext(data) {
-        // Store context if needed for future interactions
-        // Page-Viewer can use this to maintain state alignment with parent
         if (data.canvas) {
-            // If parent explicitly sends a canvas, ensure we're viewing it
-            this.pageViewer.loadPage(data.canvas)
+            this.pageViewer.loadPage(data.canvas, data.manifest, data.annotationPage, data.currentLineId)
+        }
+        if (data.currentLineId) {
+            this.pageViewer.uiManager?.highlightAnnotation?.(data.currentLineId)
         }
     }
 
     /**
-     * Handle line navigation from parent (SELECT_ANNOTATION, NAVIGATE_TO_LINE, etc.)
-     * @param {Object} data - Message data with lineId/lineid/annotation field
+     * Highlight the active line on the canvas overlay.
+     * @param {string|null} currentLineId - Full line IRI or null
      */
-    #handleLineNavigation(data) {
-        // Support both ID-based and index-based navigation payloads.
-        const lineRef = data.lineId ?? data.lineid ?? data.annotation ?? data.lineIndex ?? data.currentLineIndex
-        if (lineRef === undefined || lineRef === null) return
-
-        this.pageViewer.uiManager?.highlightAnnotation?.(lineRef)
+    #handleLineNavigation(currentLineId) {
+        if (!currentLineId) return
+        this.pageViewer.uiManager?.highlightAnnotation?.(currentLineId)
     }
 }

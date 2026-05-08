@@ -242,9 +242,8 @@ export class UIManager {
         
         // Notify parent window
         window.parent?.postMessage({
-            type: "RETURN_LINE_ID",
-            lineid,
-            lineIndex: index
+            type: "NAVIGATE_TO_LINE",
+            lineId: lineid
         }, "*")
     }
 
