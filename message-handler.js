@@ -44,17 +44,14 @@ export class MessageHandler {
     }
 
     /**
-     * Handle TPEN context message. Loads the active canvas and highlights
-     * the current line if one is set.
+     * Handle TPEN context message. Loads the active canvas; the current line
+     * (if any) rides along on `loadPage`, which highlights the matching
+     * overlay box once annotations have rendered.
      * @param {Object} data - TPEN context data
      */
     #handleTPENContext(data) {
-        if (data.canvas) {
-            this.pageViewer.loadPage(data.canvas, data.manifest, data.annotationPage, data.currentLineId)
-        }
-        if (data.currentLineId) {
-            this.pageViewer.uiManager?.highlightAnnotation?.(data.currentLineId)
-        }
+        if (!data.canvas) return
+        this.pageViewer.loadPage(data.canvas, data.manifest, data.annotationPage, data.currentLineId)
     }
 
     /**
